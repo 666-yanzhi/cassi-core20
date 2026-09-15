@@ -55,6 +55,15 @@ def validate_formal_test_split(config: dict[str, Any], manifest: dict[str, Any])
         )
     if manifest.get("split_id") != FORMAL_SPLIT_ID:
         raise ValueError("measurement manifest formal split identity mismatch")
+    manifest_split = manifest.get("split") or {}
+    expected_roles = {
+        "train_scenes": config["data"]["train_scenes"],
+        "val_scenes": config["data"]["val_scenes"],
+        "test_scenes": config["data"]["test_scenes"],
+    }
+    for role, expected in expected_roles.items():
+        if manifest_split.get(role) != expected:
+            raise ValueError(f"measurement manifest formal {role} differs from config")
 
 
 def _metadata_paths(manifest_path: Path, samples: list[dict[str, Any]]) -> tuple[Path, Path]:
@@ -128,7 +137,12 @@ def predict_and_evaluate_scene(
             normalized = (
                 measurement.astype(np.float32, copy=False) - measurement_mean
             ) / measurement_std
-            input_tensor = torch.from_numpy(np.array(normalized, copy=True)).unsqueeze(0)
+            device = next(model.parameters()).device
+            input_tensor = (
+                torch.from_numpy(np.array(normalized, copy=True))
+                .unsqueeze(0)
+                .to(device)
+            )
             standardized_prediction = model(input_tensor, model_mask).squeeze(0).cpu().numpy()
             if standardized_prediction.shape != (20, patch_height, patch_width):
                 raise ValueError(f"prediction shape mismatch: {sample['sample_id']}")
@@ -219,14 +233,19 @@ def run(config_path: Path, split: str, output_dir: Path | None = None) -> dict[s
         raise ValueError("evaluation normalization manifest identity mismatch")
 
     checkpoint_path = experiment_dir / "best_model.pt"
+    device = torch.device(config["runner"]["device"])
+    if device.type == "cuda" and not torch.cuda.is_available():
+        raise RuntimeError("config requests CUDA evaluation but CUDA is unavailable")
     model = build_model(config)
     model.load_state_dict(torch.load(checkpoint_path, map_location="cpu", weights_only=True))
-    model.eval()
+    model.to(device).eval()
     model_mask_array = np.load(
         training._resolve_project_path(manifest["model_mask"]["path"]),
         allow_pickle=False,
     )
-    model_mask = torch.from_numpy(np.array(model_mask_array, copy=True)).unsqueeze(0)
+    model_mask = (
+        torch.from_numpy(np.array(model_mask_array, copy=True)).unsqueeze(0).to(device)
+    )
     measurement_stats = normalization["measurement"]
     target_stats = normalization["target"]
     target_mean = np.asarray(target_stats["mean_by_channel"], dtype=np.float32)
@@ -261,7 +280,15 @@ def run(config_path: Path, split: str, output_dir: Path | None = None) -> dict[s
         "metrics_version": evaluation.METRICS_VERSION,
         "indices": aggregate.pop("per_index"),
     }
-    scope = "formal_test" if split == "test" else "local_validation_diagnostic"
+    scope = (
+        "formal_test"
+        if split == "test"
+        else (
+            "formal_validation"
+            if config["data"]["split_id"] == FORMAL_SPLIT_ID
+            else "local_validation_diagnostic"
+        )
+    )
     summary = {
         **aggregate,
         "scope": scope,

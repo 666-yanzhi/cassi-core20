@@ -127,5 +127,13 @@ def test_formal_test_guard_requires_split_identity_and_exact_counts() -> None:
     with pytest.raises(ValueError, match="manifest formal split identity"):
         evaluate.validate_formal_test_split(config, {})
     evaluate.validate_formal_test_split(
-        config, {"split_id": evaluate.FORMAL_SPLIT_ID}
+        config,
+        {
+            "split_id": evaluate.FORMAL_SPLIT_ID,
+            "split": {
+                "train_scenes": config["data"]["train_scenes"],
+                "val_scenes": config["data"]["val_scenes"],
+                "test_scenes": config["data"]["test_scenes"],
+            },
+        },
     )
