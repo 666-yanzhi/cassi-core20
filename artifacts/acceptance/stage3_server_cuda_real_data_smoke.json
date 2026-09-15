@@ -1,0 +1,48 @@
+{
+  "batch_size": 2,
+  "claim": "one real training batch forward, backward, and AdamW step; not convergence",
+  "config_sha256": "d2b5197c965376c6b801028c33546193955239d06581227c292df61676527721",
+  "cuda_device": "NVIDIA GeForce RTX 3090",
+  "dataset_role": "train_only",
+  "elapsed_seconds": 2.376545464619994,
+  "gradient_norm_before_clip": 0.9425972700119019,
+  "loss": 1.0166763067245483,
+  "manifest_sha256": "17f5bb398e0d2849b80f50756b067eeaa5a0612c818229db9582ba9dd3364f87",
+  "measurement_shape": [
+    2,
+    256,
+    422
+  ],
+  "model_mask_shape": [
+    2,
+    84,
+    256,
+    256
+  ],
+  "normalization_sha256": "a608d31e16bc39f2b9d3ecdca28092ba11e0f46a1c307a66b4bab1ff65ed33be",
+  "parameter_changed": true,
+  "parameter_checked": "embedding.weight",
+  "parameter_count": 24508056,
+  "peak_allocated_mib": 13975.029296875,
+  "peak_reserved_mib": 14982.0,
+  "prediction_shape": [
+    2,
+    20,
+    256,
+    256
+  ],
+  "sample_ids": [
+    "hsi_0001_y0000_x0256",
+    "hsi_0001_y0000_x0512"
+  ],
+  "schema_version": 1,
+  "split_id": "formal_252_split_seed42_202_15_35",
+  "status": "passed",
+  "supervision_shape": [
+    2,
+    40,
+    256,
+    256
+  ],
+  "torch_version": "2.4.0+cu124"
+}
