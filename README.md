@@ -49,7 +49,14 @@ python code/measurement_dataset.py verify-minimum
 
 # 第三阶段：配置驱动训练；实验目录存在时拒绝覆盖
 python code/fit_normalization.py --config config.json
-python code/train.py --config config.json
+CUDA_VISIBLE_DEVICES=1 CUBLAS_WORKSPACE_CONFIG=:4096:8 \
+  python code/smoke_cuda.py --config config.json
+CUDA_VISIBLE_DEVICES=1 CUBLAS_WORKSPACE_CONFIG=:4096:8 \
+  python code/train.py --config config.json
+
+# 从每轮结束时保存的完整状态继续
+CUDA_VISIBLE_DEVICES=1 CUBLAS_WORKSPACE_CONFIG=:4096:8 \
+  python code/train.py --config config.json --resume
 
 # 本地三景训练使用保留配置
 python code/train.py --config configs/local_smoke.json
@@ -68,7 +75,7 @@ python code/evaluate.py --config config.json --split validation
 - 正式仿真 Mask 是从原项目连续值 Mask 按空间排序派生的固定 50% 二值孔径；源文件和派生元数据均保留。
 - `index_valid_mask` 只进入损失和评估，不进入模型输入。
 - 模型输出位于标准化目标空间；评估前按训练集统计量反变换到原始指数空间。
-- 当前验证预测只覆盖 `hsi_0003` 的两个 256×256 Patch。完整 HWC 预测在未覆盖区域保存为 NaN，且这些区域不会进入指标。
+- `configs/local_smoke.json` 的验证只覆盖 `hsi_0003` 的两个 256×256 Patch；正式配置改用冻结划分中的 15 个验证场景。完整 HWC 预测在未覆盖区域保存为 NaN，且这些区域不会进入指标。
 - 正式测试必须先迁移并核验 `formal_252_split_seed42_202_15_35` 的 202/15/35 场景划分，冻结协议后再运行一次 35 景测试。
 - `evaluate.py --split test` 会强制检查正式划分 ID、202/15/35 数量及测量清单中的划分身份，避免把本地结果误标为正式测试。
 - 训练入口通过项目内的 `SceneMacroRunnerV3(RunnerV3)` 只改写验证汇总：先按坐标执行重叠均值融合，再逐指数、逐场景等权计算 `macro_zMAE`；外部学习仓库源码保持不变。
@@ -77,3 +84,6 @@ python code/evaluate.py --config config.json --split validation
 
 阶段验收记录位于 `artifacts/acceptance/`；训练产物和评估结果位于
 `outputs/<experiment_id>/`。`outputs/` 和大型 NPY 均被 Git 忽略，JSON 元数据与验收记录保留。
+正式训练的控制台输出同时写入 `outputs/formal_restormer_core20_seed42_v1/train.log`；
+每轮结束会原子保存 `history.json` 和 `last_training_state.pt`。只有训练正常结束或满足提前停止条件后，
+才会生成 `formal_training_report.json`；后台进程仍在运行不等于训练已经完成。
