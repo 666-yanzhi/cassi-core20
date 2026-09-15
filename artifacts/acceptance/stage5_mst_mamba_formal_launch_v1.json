@@ -45,7 +45,7 @@
   ],
   "stop": {
     "exit_code": 130,
-    "completed_epochs": 0,
+    "completed_epochs": 1,
     "reason": "replace model-specific train and smoke scripts with unified config-driven entrypoints",
     "old_outputs_preserved": true
   },

@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "status": "passed_ready_for_formal_restart",
+  "repository_commit": "2637728",
+  "recovery_tag": "pre-unified-entrypoints-20260915",
+  "server_tests": {
+    "passed": 64,
+    "skipped": 2,
+    "skip_reason": "local three-scene minimum data are intentionally absent on server"
+  },
+  "old_runs": {
+    "archive": "outputs/paused_pre_unified_20260915",
+    "RestormerCore20": {
+      "completed_epochs": 4,
+      "exit_code": 143,
+      "best_validation_macro_zMAE": 0.16022804115204428
+    },
+    "MSTMambaCore20": {
+      "completed_epochs": 1,
+      "exit_code": 130,
+      "best_validation_macro_zMAE": 0.20497897936808024
+    }
+  },
+  "unified_contract": {
+    "training": "python code/train.py --config <config.json>",
+    "cuda_smoke": "python code/smoke_cuda.py --config <config.json>",
+    "evaluation": "python code/evaluate.py --config <config.json> --split validation|test",
+    "selector": "config.model.name"
+  },
+  "formal_cuda_gates": {
+    "RestormerCore20": "passed",
+    "MSTMambaCore20": "passed"
+  }
+}
