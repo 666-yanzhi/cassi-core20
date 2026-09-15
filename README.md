@@ -6,6 +6,7 @@
 2. CASSI 光学前向、物理 Mask 派生和测量样本生成；
 3. `(measurement, model_mask) -> 20 通道指数` 的 Restormer 训练；
 4. Patch 按原坐标拼接，并在原始指数空间执行场景宏平均评估。
+5. 在同一 Core20 协议下执行 Transformer、Mamba、公式引导、简单直接预测和重建后计算的论文对照。
 
 根目录配置已切换到服务器 252 景正式基线；三景配置仍保存在
 `configs/local_smoke.json`，其结果只用于行为门禁，不是正式泛化结果。
@@ -79,6 +80,14 @@ python code/evaluate.py --config config.json --split validation
 - 正式测试必须先迁移并核验 `formal_252_split_seed42_202_15_35` 的 202/15/35 场景划分，冻结协议后再运行一次 35 景测试。
 - `evaluate.py --split test` 会强制检查正式划分 ID、202/15/35 数量及测量清单中的划分身份，避免把本地结果误标为正式测试。
 - 训练入口通过项目内的 `SceneMacroRunnerV3(RunnerV3)` 只改写验证汇总：先按坐标执行重叠均值融合，再逐指数、逐场景等权计算 `macro_zMAE`；外部学习仓库源码保持不变。
+
+## 第五阶段计划
+
+- 必做直接预测模型：`RestormerCore20`、`MST-MambaCore20`、`IFGNetCore20` 和 `UNetCore20`。
+- 必做传统基线：CASSI 测量重建 84 波段 HSI 后，再用同一 `reviewed_v3_core20` 公式计算 20 指数。
+- `DHM` 只在 MST-Mamba 值得继续时作全局/局部 Mamba 消融；`WPO3D` 只在完成与 CASSI 成像方程的数学对应后纳入。
+- 首轮固定一个种子使用训练集/验证集筛选；最终保留方法至少运行 3 个随机种子，模型和超参数冻结后才进行一次正式测试。
+- 旧仓库 32 通道权重和重复归一化测试数值只作历史记录，不与 Core20 结果混用。
 
 ## 证据
 
