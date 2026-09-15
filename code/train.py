@@ -390,6 +390,8 @@ def run(config_path: Path, *, resume: bool = False) -> dict[str, Any]:
         },
         "code_identity": code_identity,
         "completed_epochs": completed_epochs,
+        "device": runner_config["device"],
+        "resumed": resume,
         "parameter_updated": parameter_updated,
         "overfit_probe": overfit_probe,
         "checkpoint_restore": {
@@ -414,6 +416,59 @@ def run(config_path: Path, *, resume: bool = False) -> dict[str, Any]:
         ),
     }
     training.atomic_write_json(experiment_dir / "experiment.meta.json", metadata)
+    if config["data"]["split_id"] == "formal_252_split_seed42_202_15_35":
+        dev_metrics = runner.history["dev_metric"]
+        if not dev_metrics:
+            raise RuntimeError("formal training completed without validation metrics")
+        best_epoch = min(range(len(dev_metrics)), key=dev_metrics.__getitem__) + 1
+        formal_report = {
+            "schema_version": 1,
+            "status": "formal_training_complete_test_not_run",
+            "completion_predicate": {
+                "training_process_exited_successfully": True,
+                "completed_epochs": completed_epochs,
+                "best_checkpoint_exists": (experiment_dir / "best_model.pt").is_file(),
+                "last_full_state_exists": state_path.is_file(),
+                "checkpoint_restore_passed": restore_matches,
+                "history_epoch_count_matches": completed_epochs
+                == len(runner.history["train_loss"]),
+            },
+            "experiment_id": config["experiment_id"],
+            "experiment_signature": experiment_signature,
+            "split_id": config["data"]["split_id"],
+            "completed_epochs": completed_epochs,
+            "best_validation": {
+                "metric": "macro_zMAE",
+                "epoch": best_epoch,
+                "value": dev_metrics[best_epoch - 1],
+            },
+            "artifacts": {
+                "log": str(log_path),
+                "best_model": str(experiment_dir / "best_model.pt"),
+                "best_model_sha256": metadata["best_model_sha256"],
+                "last_training_state": str(state_path),
+                "last_training_state_sha256": metadata[
+                    "last_training_state_sha256"
+                ],
+                "history": str(experiment_dir / "history.json"),
+                "resolved_config": str(experiment_dir / "resolved_config.json"),
+                "normalization": str(experiment_dir / "normalization.json"),
+            },
+            "resume_command": (
+                "CUDA_VISIBLE_DEVICES=1 CUBLAS_WORKSPACE_CONFIG=:4096:8 "
+                "/home/user/anaconda3/envs/cassi/bin/python code/train.py "
+                "--config config.json --resume"
+            ),
+            "formal_test": {
+                "completed": False,
+                "policy": "Run exactly once after model, config, normalization, and protocol freeze.",
+            },
+        }
+        if not all(formal_report["completion_predicate"].values()):
+            raise RuntimeError("formal training completion predicate failed")
+        training.atomic_write_json(
+            experiment_dir / "formal_training_report.json", formal_report
+        )
     return {
         "status": metadata["status"],
         "experiment_dir": str(experiment_dir),
