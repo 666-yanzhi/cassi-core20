@@ -110,3 +110,46 @@ def test_formal_split_loader_requires_exact_frozen_partition(tmp_path: Path) -> 
     split_path.write_text(json.dumps(payload), encoding="utf-8")
     with pytest.raises(ValueError, match="unique integers"):
         measurement_dataset.load_formal_scene_split(split_path)
+
+
+def test_measurement_verifier_rejects_ungrouped_samples(tmp_path: Path) -> None:
+    output_dir = tmp_path / "measurements"
+    output_dir.mkdir()
+    manifest = {
+        "scope": measurement_dataset.MASK_ROLE_DEVELOPMENT,
+        "forward_version": cassi_forward.FORWARD_VERSION,
+        "label_version": measurement_dataset.LABEL_VERSION,
+        "hsi_validity_version": measurement_dataset.VALIDITY_VERSION,
+        "measurement_scale": cassi_forward.MEASUREMENT_SCALE,
+        "dispersion_step": cassi_forward.DISPERSION_STEP,
+        "model_mask_policy": cassi_forward.MODEL_MASK_POLICY,
+        "physical_mask": {"path": "unused", "metadata_path": "unused"},
+        "model_mask": {"sha256": "unused"},
+        "sample_count": 2,
+        "samples": [
+            {"scene": "scene_b", "top": 0, "left": 0, "sample_id": "b"},
+            {"scene": "scene_a", "top": 0, "left": 0, "sample_id": "a"},
+        ],
+    }
+    (output_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    # The mask check happens before sample ordering, so isolate the ordering
+    # invariant by replacing only the already-tested artifact loaders.
+    physical_mask = np.ones((256, 256), dtype=np.float32)
+    model_mask = cassi_forward.build_model_mask(physical_mask)
+    np.save(output_dir / "model_mask.npy", model_mask)
+    manifest["model_mask"]["sha256"] = measurement_dataset.sha256_file(
+        output_dir / "model_mask.npy"
+    )
+    (output_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    original_loader = measurement_dataset.load_mask_artifact
+    measurement_dataset.load_mask_artifact = lambda *args, **kwargs: (
+        physical_mask,
+        {"sha256": "physical"},
+    )
+    try:
+        with pytest.raises(ValueError, match="scene-grouped"):
+            measurement_dataset.verify_smoke_dataset(output_dir)
+    finally:
+        measurement_dataset.load_mask_artifact = original_loader

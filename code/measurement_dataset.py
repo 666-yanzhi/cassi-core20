@@ -613,20 +613,30 @@ def verify_smoke_dataset(
     samples = manifest.get("samples")
     if not isinstance(samples, list) or manifest.get("sample_count") != len(samples):
         raise ValueError("manifest sample_count does not match samples")
-    source_cache: dict[str, tuple[np.ndarray, np.ndarray]] = {}
+    expected_sample_order = sorted(
+        samples,
+        key=lambda item: (item["scene"], item["top"], item["left"], item["sample_id"]),
+    )
+    if samples != expected_sample_order:
+        raise ValueError("measurement manifest samples must be scene-grouped and coordinate-sorted")
+    current_scene: str | None = None
+    stored_hsi: np.ndarray | None = None
+    hsi_valid_mask: np.ndarray | None = None
     for sample in samples:
         metadata = _read_json(output_dir / sample["metadata"])
         if metadata.get("sample_id") != sample.get("sample_id"):
             raise ValueError("sample metadata identity mismatch")
         scene = sample["scene"]
-        if scene not in source_cache:
-            source_cache[scene] = (
-                cassi_forward.load_npy_strict(DEFAULT_INPUT_DIR / f"{scene}.npy"),
-                cassi_forward.load_npy_strict(
-                    DEFAULT_VALIDITY_DIR / f"{scene}.hsi_valid_mask.npy"
-                ),
+        if scene != current_scene:
+            stored_hsi = cassi_forward.load_npy_strict(
+                DEFAULT_INPUT_DIR / f"{scene}.npy"
             )
-        stored_hsi, hsi_valid_mask = source_cache[scene]
+            hsi_valid_mask = cassi_forward.load_npy_strict(
+                DEFAULT_VALIDITY_DIR / f"{scene}.hsi_valid_mask.npy"
+            )
+            current_scene = scene
+        if stored_hsi is None or hsi_valid_mask is None:
+            raise AssertionError("scene source cache was not initialized")
         patch = cassi_forward.extract_unit_reflectance_patch(
             stored_hsi,
             hsi_valid_mask,
