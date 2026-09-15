@@ -101,15 +101,16 @@ python code/evaluate.py \
 - 首轮固定一个种子使用训练集/验证集筛选；最终保留方法至少运行 3 个随机种子，模型和超参数冻结后才进行一次正式测试。
 - 旧仓库 32 通道权重和重复归一化测试数值只作历史记录，不与 Core20 结果混用。
 
-### MST-Mamba 正式训练（服务器 GPU0）
+### 统一正式训练（服务器）
 
-当前首轮配置为 `configs/formal_mst_mamba_seed42.json`，输出目录为
-`outputs/formal_mst_mamba_core20_seed42_v1/`。正式任务使用 `screen` 会话
-`cassi_mst_mamba_core20`；以下操作不会读取正式测试集：
+Restormer 与 MST-Mamba 都由 `code/train.py` 启动，分别使用 `config.json` 和
+`configs/formal_mst_mamba_seed42.json`。正式任务使用两个独立 `screen` 会话；
+以下操作不会读取正式测试集：
 
 ```bash
 # 查看会话；进入后按 Ctrl-A、D 脱离，训练会继续
 screen -ls
+screen -r cassi_restormer_core20
 screen -r cassi_mst_mamba_core20
 
 # 从最近完整 epoch 状态恢复时，须先确认旧任务已经退出
@@ -119,13 +120,14 @@ CUDA_VISIBLE_DEVICES=0 CUBLAS_WORKSPACE_CONFIG=:4096:8 \
   --config configs/formal_mst_mamba_seed42.json --resume
 
 # 不进入会话也可查看训练输出
-tail -f outputs/setup_logs/formal_mst_mamba_screen.log
+tail -f outputs/setup_logs/formal_restormer_unified_screen.log
+tail -f outputs/setup_logs/formal_mst_mamba_unified_screen.log
 ```
 
-`screen` 存在且训练 PID 存活只表示任务正在运行。只有会话退出、
-`outputs/setup_logs/formal_mst_mamba_screen.exit` 为 `0`，并且实验目录内
-`formal_training_report.json`、`best_model.pt` 和 `last_training_state.pt`
-均存在，才可标记本次正式训练完成。
+`screen` 存在且训练 PID 存活只表示任务正在运行。某个模型只有在对应会话退出、
+对应的 `outputs/setup_logs/*_unified_screen.exit` 为 `0`，并且实验目录内的
+`formal_training_report.json`、`best_model.pt` 和 `last_training_state.pt` 均存在时，
+才可标记该模型的正式训练完成。
 
 ## 证据
 
