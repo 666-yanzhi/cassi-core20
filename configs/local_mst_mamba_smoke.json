@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "experiment_id": "local_mst_mamba_smoke_v1",
+  "data": {
+    "split_id": "local_minimum_2_1_0",
+    "manifest": "data/derived/measurements/cassi_forward_v1/local_minimum/manifest.json",
+    "normalization": "artifacts/normalization/local_minimum_train12_v1.json",
+    "train_scenes": ["hsi_0001", "hsi_0002"],
+    "val_scenes": ["hsi_0003"],
+    "test_scenes": [],
+    "patch_size": 256,
+    "batch_size": 2,
+    "val_batch_size": 1,
+    "num_workers": 0
+  },
+  "normalization": {"epsilon": 1e-06},
+  "model": {
+    "name": "MSTMambaCore20",
+    "dim": 4,
+    "stage": 1,
+    "num_blocks": [1],
+    "d_state": 2,
+    "expand_factor": 1,
+    "d_conv": 2,
+    "dt_rank": "auto",
+    "pscan_parallel": true,
+    "mask_fusion": "input_mul",
+    "stage_reductions": [8, 4, 8],
+    "in_channels": 84,
+    "out_channels": 20
+  },
+  "loss": {"name": "MaskedBalancedCharbonnier", "epsilon": 0.001},
+  "optimizer": {"name": "AdamW", "learning_rate": 0.001, "weight_decay": 0.0001},
+  "scheduler": {"name": "CosineAnnealingLR", "t_max": 2, "eta_min": 1e-05},
+  "runner": {
+    "runner_root": "/home/yanzhi/project/nndl-practice/pytorch",
+    "epochs": 2,
+    "device": "cpu",
+    "seed": 42,
+    "gradient_clip_norm": 1.0,
+    "early_stopping_patience": 2,
+    "log_every": 1,
+    "run_overfit_probe": true
+  },
+  "metrics": {
+    "checkpoint": "macro_zMAE",
+    "report": ["MAE", "RMSE", "Bias", "R2"],
+    "aggregation": "scene_macro",
+    "r2_variance_threshold": 1e-12,
+    "overlap_fusion": "uniform_mean"
+  },
+  "protocol": {
+    "label": "reviewed_v3_core20",
+    "forward": "cassi_forward_v1",
+    "training": "core20_training_v1",
+    "metrics": "core20_metrics_v1"
+  },
+  "output": {"root": "outputs"}
+}

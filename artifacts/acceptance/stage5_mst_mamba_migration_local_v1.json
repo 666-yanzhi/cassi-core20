@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "scope": "stage5_mst_mamba_core20_local_migration",
+  "audited_on": "2026-09-15",
+  "model": {
+    "name": "MSTMambaCore20",
+    "input": "measurement[B,256,422] + model_mask[B,84,256,256]",
+    "output": "prediction[B,20,256,256]",
+    "formal_configuration": "configs/formal_mst_mamba_seed42.json",
+    "formal_configuration_sha256": "d871b9f9c3173abf3a7f6599d2ead42b17f0c9c4cdfc3225df30519fbef97594",
+    "old_32_channel_checkpoint_reused": false
+  },
+  "legacy_sources": {
+    "MST_Mamba.py": "574e78ae5d316042c9c31209a08d3c14cfe82070523fb3bcbea648ec05e11c77",
+    "MST_Mamba_VegIdx.py": "6260a8cc990771742b4fbb699bbe79f8a62db1bf4bbf7ab2341654b76ce80d29",
+    "mamba_core.py": "27239702dd41b60d110153ee49a5a849c3dceb107cc907fc3f08e5093f3e6f8c",
+    "pscan.py": "2e82ef79b84181555cc5906b6105562f7ed9684ddb100ac7294320515ab22aa2"
+  },
+  "migration_changes": [
+    "rebuilt the output head from 32 to the isolated 20-channel protocol",
+    "added strict measurement, mask, channel, and model-configuration validation",
+    "retained mask-aware Mamba blocks, U-Net stages, and learned mask downsampling",
+    "removed silent first-mask replacement when a batch contains distinct masks",
+    "included model.py, blocks.py, mamba_core.py, and pscan.py in experiment identity"
+  ],
+  "protocol_equivalence": {
+    "same_split": true,
+    "same_manifest": true,
+    "same_train_only_normalization": true,
+    "same_loss": true,
+    "same_optimizer_and_scheduler": true,
+    "same_metrics": true,
+    "batch_size_difference": "Restormer=2, MST-Mamba=1; retained as a recorded memory constraint"
+  },
+  "tests": {
+    "full_suite": "64 passed",
+    "parallel_scan_matches_direct_recurrence": true,
+    "finite_forward_and_gradients": true,
+    "per_sample_mask_independence": true,
+    "strict_config": true
+  },
+  "local_training_smoke": {
+    "completed_epochs": 2,
+    "checkpoint_restore_passed": true,
+    "overfit_steps": 8,
+    "overfit_relative_final_loss": 0.688074015389381,
+    "claim": "local six-patch behavior gate only; not CUDA or generalization evidence"
+  }
+}
