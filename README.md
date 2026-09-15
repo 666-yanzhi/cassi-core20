@@ -1,6 +1,6 @@
 # CASSI Core20 正式基线
 
-本目录按《项目搭建工作流》实现从 84 波段 HSI 到 20 通道植被指数的四阶段流程：
+本目录按《项目搭建工作流》实现从 84 波段 HSI 到 20 通道植被指数的五阶段流程：
 
 1. HSI 有效性检查与 `reviewed_v3_core20` 标签生成；
 2. CASSI 光学前向、物理 Mask 派生和测量样本生成；
@@ -64,6 +64,14 @@ python code/train.py --config configs/local_smoke.json
 
 # 第四阶段：本地验证诊断
 python code/evaluate.py --config config.json --split validation
+
+# 第五阶段：MST-Mamba 接口与 GPU 门禁
+python code/train_mst_mamba.py --config configs/local_mst_mamba_smoke.json
+CUDA_VISIBLE_DEVICES=0 CUBLAS_WORKSPACE_CONFIG=:4096:8 \
+  PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
+  python code/smoke_mst_mamba_cuda.py \
+  --config configs/formal_mst_mamba_seed42.json \
+  --output artifacts/acceptance/stage5_mst_mamba_server_cuda_smoke.json
 ```
 
 各入口的完整参数以 `--help` 为准。正式训练唯一可调配置源是项目根目录的
@@ -88,6 +96,32 @@ python code/evaluate.py --config config.json --split validation
 - `DHM` 只在 MST-Mamba 值得继续时作全局/局部 Mamba 消融；`WPO3D` 只在完成与 CASSI 成像方程的数学对应后纳入。
 - 首轮固定一个种子使用训练集/验证集筛选；最终保留方法至少运行 3 个随机种子，模型和超参数冻结后才进行一次正式测试。
 - 旧仓库 32 通道权重和重复归一化测试数值只作历史记录，不与 Core20 结果混用。
+
+### MST-Mamba 正式训练（服务器 GPU0）
+
+当前首轮配置为 `configs/formal_mst_mamba_seed42.json`，输出目录为
+`outputs/formal_mst_mamba_core20_seed42_v1/`。正式任务使用 `screen` 会话
+`cassi_mst_mamba_core20`；以下操作不会读取正式测试集：
+
+```bash
+# 查看会话；进入后按 Ctrl-A、D 脱离，训练会继续
+screen -ls
+screen -r cassi_mst_mamba_core20
+
+# 从最近完整 epoch 状态恢复时，须先确认旧任务已经退出
+CUDA_VISIBLE_DEVICES=0 CUBLAS_WORKSPACE_CONFIG=:4096:8 \
+  PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
+  python code/train_mst_mamba.py \
+  --config configs/formal_mst_mamba_seed42.json --resume
+
+# 不进入会话也可查看训练输出
+tail -f outputs/setup_logs/formal_mst_mamba_screen.log
+```
+
+`screen` 存在且训练 PID 存活只表示任务正在运行。只有会话退出、
+`outputs/setup_logs/formal_mst_mamba_screen.exit` 为 `0`，并且实验目录内
+`formal_training_report.json`、`best_model.pt` 和 `last_training_state.pt`
+均存在，才可标记本次正式训练完成。
 
 ## 证据
 
