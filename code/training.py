@@ -310,7 +310,9 @@ def fit_normalization(
     target_sum = np.zeros(INDEX_CHANNELS, dtype=np.float64)
     target_square_sum = np.zeros(INDEX_CHANNELS, dtype=np.float64)
     target_count = np.zeros(INDEX_CHANNELS, dtype=np.int64)
-    label_cache: dict[str, tuple[np.ndarray, np.ndarray]] = {}
+    current_scene: str | None = None
+    current_labels: np.ndarray | None = None
+    current_validity: np.ndarray | None = None
 
     for sample in samples:
         measurement = np.load(
@@ -330,20 +332,21 @@ def fit_normalization(
         metadata = _read_json(manifest_path.parent / sample["metadata"])
         supervision = metadata.get("supervision") or {}
         scene = sample["scene"]
-        if scene not in label_cache:
-            label_cache[scene] = (
-                np.load(
-                    _resolve_project_path(supervision["indices_path"]),
-                    mmap_mode="r",
-                    allow_pickle=False,
-                ),
-                np.load(
-                    _resolve_project_path(supervision["index_valid_mask_path"]),
-                    mmap_mode="r",
-                    allow_pickle=False,
-                ),
+        if scene != current_scene:
+            current_labels = np.load(
+                _resolve_project_path(supervision["indices_path"]),
+                mmap_mode="r",
+                allow_pickle=False,
             )
-        labels, validity = label_cache[scene]
+            current_validity = np.load(
+                _resolve_project_path(supervision["index_valid_mask_path"]),
+                mmap_mode="r",
+                allow_pickle=False,
+            )
+            current_scene = scene
+        if current_labels is None or current_validity is None:
+            raise RuntimeError("normalization label state was not initialized")
+        labels, validity = current_labels, current_validity
         top, left = sample["top"], sample["left"]
         label_patch = labels[top : top + PATCH_SIZE, left : left + PATCH_SIZE]
         valid_patch = validity[top : top + PATCH_SIZE, left : left + PATCH_SIZE]

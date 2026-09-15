@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "scope": "formal_252_measurements",
+  "audited_on": "2026-09-15",
+  "environment": {
+    "conda": "cassi",
+    "server_project": "/home/user/programs/cassi-core20"
+  },
+  "dataset": {
+    "measurement_version": "cassi_forward_v1",
+    "split_id": "formal_252_split_seed42_202_15_35",
+    "scene_count": 252,
+    "sample_count": 4400,
+    "stride": 256,
+    "disk_usage": "1.9G",
+    "manifest": "data/derived/measurements/cassi_forward_v1/formal_252_stride256/manifest.json",
+    "manifest_sha256": "17f5bb398e0d2849b80f50756b067eeaa5a0612c818229db9582ba9dd3364f87",
+    "model_mask_sha256": "5ca6cf7fd4fae3d429c091742b1e5a4f80790224b8db17d100932dc5803c0b04"
+  },
+  "generation": {
+    "exit_code": 0,
+    "log": "outputs/setup_logs/stage2_measurements.log"
+  },
+  "full_verification": {
+    "exit_code": 0,
+    "status": "verified_existing",
+    "log": "outputs/setup_logs/stage2_verify_v2.log",
+    "bounded_resident_memory_mib": 423
+  },
+  "superseded_attempt": {
+    "reason": "verification retained every scene memmap and caused linear memory growth",
+    "action": "terminated the read-only verifier before memory exhaustion; no generated data changed",
+    "log": "outputs/setup_logs/stage2_verify_interrupted_memory.log",
+    "exit_code": 143,
+    "fix_commit": "d1b6976"
+  }
+}
