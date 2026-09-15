@@ -1,18 +1,18 @@
 {
   "schema_version": 1,
-  "status": "stopped_before_first_epoch_for_registry_identity_fix",
-  "claim": "two formal models were briefly launched through the unified entrypoint, then stopped so unrelated future model registrations cannot invalidate their checkpoint signatures",
-  "started_at": "2026-09-16T00:05:06+08:00",
-  "repository_commit": "ce544a1",
+  "status": "running",
+  "claim": "two formal models are running through the same code/train.py; config.model.name selects the model and each checkpoint signature binds only the selected registry logic",
+  "started_at": "2026-09-16T00:11:34+08:00",
+  "observed_at": "2026-09-16T00:12:03+08:00",
+  "repository_commit": "cf38d15",
   "working_directory": "/home/user/programs/cassi-core20",
-  "old_run_archive": "outputs/paused_pre_unified_20260915",
   "runs": {
     "RestormerCore20": {
       "config": "config.json",
       "physical_gpu": 1,
       "screen_session": "cassi_restormer_core20",
-      "screen_pid": 1874877,
-      "training_pid": 1874885,
+      "screen_pid": 1876438,
+      "training_pid": 1876446,
       "log": "outputs/setup_logs/formal_restormer_unified_screen.log",
       "exit_file": "outputs/setup_logs/formal_restormer_unified_screen.exit",
       "experiment_dir": "outputs/formal_restormer_core20_seed42_v1"
@@ -21,8 +21,8 @@
       "config": "configs/formal_mst_mamba_seed42.json",
       "physical_gpu": 0,
       "screen_session": "cassi_mst_mamba_core20",
-      "screen_pid": 1874879,
-      "training_pid": 1874886,
+      "screen_pid": 1876441,
+      "training_pid": 1876447,
       "log": "outputs/setup_logs/formal_mst_mamba_unified_screen.log",
       "exit_file": "outputs/setup_logs/formal_mst_mamba_unified_screen.exit",
       "experiment_dir": "outputs/formal_mst_mamba_core20_seed42_v1"
@@ -33,11 +33,6 @@
     "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
     "gpu0_memory_used_mib": 21134,
     "gpu1_memory_used_mib": 15344
-  },
-  "stop": {
-    "completed_epochs_per_model": 0,
-    "exit_code_per_model": 130,
-    "archive": "outputs/aborted_unified_registry_v0_20260916"
   },
   "completion_predicate_per_model": [
     "screen session has exited",
