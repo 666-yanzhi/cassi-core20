@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
+import inspect
+import json
 from pathlib import Path
 from typing import Any, Callable
 
@@ -169,6 +172,11 @@ _BUILDERS: dict[str, Callable[[dict[str, Any]], nn.Module]] = {
     "MSTMambaCore20": _build_mst_mamba,
 }
 
+_MODEL_FIELDS = {
+    "RestormerCore20": RESTORMER_FIELDS,
+    "MSTMambaCore20": MST_MAMBA_FIELDS,
+}
+
 _SOURCE_MODULES = {
     "RestormerCore20": {
         "model": restormer_core20,
@@ -213,3 +221,29 @@ def source_files(model_name: str) -> dict[str, Path]:
         label: Path(module.__file__).resolve()
         for label, module in _SOURCE_MODULES[model_name].items()
     }
+
+
+def selected_logic_sha256(model_name: str) -> str:
+    """Hash only logic used by one model, so registering peers cannot break resume."""
+
+    if model_name not in _VALIDATORS:
+        raise ValueError(
+            f"unsupported model.name={model_name!r}; "
+            f"supported={list(supported_model_names())}"
+        )
+    payload = {
+        "model_name": model_name,
+        "helpers": [
+            inspect.getsource(function)
+            for function in (
+                _require_exact_fields,
+                _positive_integer,
+                _validate_protocol_channels,
+            )
+        ],
+        "validator": inspect.getsource(_VALIDATORS[model_name]),
+        "builder": inspect.getsource(_BUILDERS[model_name]),
+        "fields": sorted(_MODEL_FIELDS[model_name]),
+    }
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    return hashlib.sha256(encoded).hexdigest()

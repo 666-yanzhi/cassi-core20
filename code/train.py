@@ -230,7 +230,6 @@ def run(config_path: Path, *, resume: bool = False) -> dict[str, Any]:
     SceneMacroRunnerV3 = scene_macro_runner.create_scene_macro_runner_class(RunnerV3)
     training_file = Path(training.__file__).resolve()
     train_entry_file = Path(__file__).resolve()
-    registry_file = Path(model_registry.__file__).resolve()
     model_name = config["model"]["name"]
     code_identity = {
         "model": {
@@ -244,8 +243,8 @@ def run(config_path: Path, *, resume: bool = False) -> dict[str, Any]:
             },
         },
         "model_registry": {
-            "path": str(registry_file),
-            "sha256": training.sha256_file(registry_file),
+            "selected_model": model_name,
+            "selected_logic_sha256": model_registry.selected_logic_sha256(model_name),
         },
         "training": {
             "path": str(training_file),

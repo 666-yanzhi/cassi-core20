@@ -17,6 +17,7 @@ if str(CODE_DIR) not in sys.path:
 
 import training
 from models import MSTMambaCore20, RestormerCore20
+import model_registry
 import train
 import scene_macro_runner
 
@@ -100,6 +101,9 @@ def test_one_config_loader_and_model_builder_select_both_models(tmp_path: Path) 
 
     assert isinstance(train.build_model(restormer_config), RestormerCore20)
     assert isinstance(train.build_model(mst_config), MSTMambaCore20)
+    assert model_registry.selected_logic_sha256("RestormerCore20") != (
+        model_registry.selected_logic_sha256("MSTMambaCore20")
+    )
 
     payload = json.loads(
         (REPO_ROOT / "configs/local_smoke.json").read_text(encoding="utf-8")

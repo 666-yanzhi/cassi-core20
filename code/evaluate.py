@@ -307,6 +307,9 @@ def run(config_path: Path, split: str, output_dir: Path | None = None) -> dict[s
         },
         "model_code": {
             "name": config["model"]["name"],
+            "selected_registry_logic_sha256": model_registry.selected_logic_sha256(
+                config["model"]["name"]
+            ),
             "files": {
                 label: {
                     "path": str(path),
