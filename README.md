@@ -48,6 +48,7 @@ python code/measurement_dataset.py verify-formal
 python code/measurement_dataset.py verify-minimum
 
 # 第三阶段：配置驱动训练；实验目录存在时拒绝覆盖
+python code/fit_normalization.py --config config.json
 python code/train.py --config config.json
 
 # 本地三景训练使用保留配置
