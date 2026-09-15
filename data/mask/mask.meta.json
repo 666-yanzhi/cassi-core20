@@ -1,0 +1,49 @@
+{
+  "allowed_values": [
+    0.0,
+    1.0
+  ],
+  "binary": true,
+  "closed_count": 32768,
+  "closed_value": 0.0,
+  "dtype": "float32",
+  "mask_id": "legacy_top_half_binary_v1",
+  "mask_version": "legacy_top_half_binary_v1",
+  "open_count": 32768,
+  "open_fraction": 0.5,
+  "open_value": 1.0,
+  "path": "data/mask/mask.npy",
+  "physical_status": "not_hardware_calibrated",
+  "role": "formal",
+  "schema_version": 1,
+  "sha256": "747b4eeb32568e281325e736feae9b989c23acbd303a20f140a9c33903ab634b",
+  "shape": [
+    256,
+    256
+  ],
+  "source": {
+    "dtype": "float32",
+    "max": 1.0,
+    "mean": 0.5632261273596839,
+    "min": 0.006599954329431057,
+    "path": "data/mask/source/legacy_project_mask.npy",
+    "sha256": "9d529ec7465e5d44d589cd29b13d524f53c2702ea14ec56aa12a5d0e3cd89808",
+    "shape": [
+      256,
+      256
+    ],
+    "unique_value_count": 3903
+  },
+  "transformation": {
+    "boundary_tie_count": 2,
+    "closed_max_source_value": 0.6075777411460876,
+    "flatten_order": "C",
+    "method": "top_half_by_value",
+    "open_min_source_value": 0.6078221797943115,
+    "rank_order": "ascending_stable",
+    "target_open_fraction": 0.5,
+    "tie_breaker": "later_C_order_positions_open_first"
+  },
+  "usage": "formal_simulation_baseline",
+  "warning": "Formal simulation baseline derived from a legacy continuous mask; not a calibrated physical-aperture measurement."
+}

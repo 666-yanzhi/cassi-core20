@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "stage": 4,
+  "scope": "local_validation_diagnostic",
+  "status": "passed",
+  "experiment_id": "local_minimum_smoke_v5",
+  "commands": [
+    {
+      "command": "conda activate deep-learning && pytest -q",
+      "exit_code": 0,
+      "result": "56 passed"
+    },
+    {
+      "command": "conda activate deep-learning && python code/evaluate.py --config config.json --split validation",
+      "exit_code": 0,
+      "result": "complete; local_validation_diagnostic"
+    },
+    {
+      "command": "repeat evaluation in a fresh temporary output directory and compare SHA-256",
+      "exit_code": 0,
+      "result": "summary, per-index metrics, prediction, and coverage files were byte-identical"
+    }
+  ],
+  "prediction_contract": {
+    "scene": "hsi_0003",
+    "shape_hwc": [
+      1386,
+      1004,
+      20
+    ],
+    "dtype": "float32",
+    "space": "original_vegetation_index",
+    "coverage_pixel_count": 131072,
+    "finite_inside_evaluation_coverage": true,
+    "nan_outside_crop_coverage": true,
+    "overlap_fusion": "uniform_mean"
+  },
+  "dataset_scene_macro": {
+    "MAE": 0.49141547007233494,
+    "RMSE": 0.6857814428154602,
+    "Bias": -0.014198377337080136,
+    "R2": -0.22332942562204208
+  },
+  "metric_domain_evidence": {
+    "defined_R2_indices": 20,
+    "minimum_R2": -2.1867338211696636,
+    "negative_R2_preserved": true,
+    "minimum_index_valid_pixel_count": 130169,
+    "maximum_index_valid_pixel_count": 131072,
+    "scene_equal_aggregation_tested": true,
+    "nonfinite_prediction_failure_tested": true,
+    "r2_undefined_reasons_tested": true
+  },
+  "sha256": {
+    "summary": "a8358a7df958be482f585c79b2a695f28fcf61103235adaef1726bfc16c4ac16",
+    "per_scene_metrics": "0fd1a582eecb2a9fd58b8b879dc55c3da969fc03fdbe159a4f06b8d8a2bb071f",
+    "per_index_metrics": "a56ccd0c02d727370bfe91fd04ca8f8d4cd01ead8a6c172b2cc302f38ccc1610",
+    "evaluation_protocol": "8bbf62b42be4cbaf00400fa7f166bf9269d6a402b8bc8ad64245b6a9d9707bb2",
+    "prediction": "a83219ee30e9eff0c4d1d054737f7e98c8fbc76fd65be98a952296d29e7b68b4",
+    "coverage": "f0aa5f93a1d46feb0b5864e830e97ba0375d95f642a94df380c18645a357b3c6"
+  },
+  "limitations": [
+    "Only one local validation scene with two non-overlapping patches was evaluated.",
+    "This result is not the formal 35-scene held-out test and supports no generalization claim.",
+    "Most of the saved full-scene prediction is NaN by design because it lies outside patch coverage."
+  ]
+}

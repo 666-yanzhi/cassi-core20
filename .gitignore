@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+
+/data/raw/
+/data/derived/
+/outputs/
+
+!/data/mask/*.npy
+!/data/mask/**/*.npy

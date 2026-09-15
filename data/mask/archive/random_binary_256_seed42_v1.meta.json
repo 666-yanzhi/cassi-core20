@@ -1,0 +1,29 @@
+{
+  "allowed_values": [
+    0.0,
+    1.0
+  ],
+  "closed_count": 33044,
+  "closed_value": 0.0,
+  "created_at_utc": "2026-09-14T12:42:09.753574+00:00",
+  "dtype": "float32",
+  "generator": {
+    "api": "default_rng.integers",
+    "bit_generator": "PCG64",
+    "high_exclusive": 2,
+    "library": "numpy",
+    "low_inclusive": 0,
+    "seed": 42
+  },
+  "mask_version": "random_binary_256_seed42_v1",
+  "open_count": 32492,
+  "open_ratio": 0.49578857421875,
+  "open_value": 1.0,
+  "schema_version": 1,
+  "sha256": "3ea2258195d28217fba4d588da04562031a3e7c60a63841df25fca2bccd727a4",
+  "shape": [
+    256,
+    256
+  ],
+  "usage": "synthetic_cassi_baseline"
+}

@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "stage": 3,
+  "scope": "local_minimum_behavior_gate",
+  "status": "passed",
+  "experiment_id": "local_minimum_smoke_v5",
+  "environment": {
+    "conda_environment": "deep-learning",
+    "python_executable": "/home/yanzhi/miniconda3/envs/deep-learning/bin/python",
+    "python_version": "3.14.7",
+    "numpy_version": "2.5.2",
+    "torch_version": "2.13.0+cu132",
+    "device": "cpu",
+    "cuda_available": false
+  },
+  "data_boundary": {
+    "train_scenes": [
+      "hsi_0001",
+      "hsi_0002"
+    ],
+    "validation_scenes": [
+      "hsi_0003"
+    ],
+    "test_scenes": [],
+    "normalization_fit_role": "train_only",
+    "sample_count": 6
+  },
+  "commands": [
+    {
+      "command": "conda activate deep-learning && pytest -q code/tests/test_training.py",
+      "exit_code": 0,
+      "result": "7 passed"
+    },
+    {
+      "command": "conda activate deep-learning && pytest -q",
+      "exit_code": 0,
+      "result": "56 passed"
+    },
+    {
+      "command": "conda activate deep-learning && python code/train.py --config config.json",
+      "exit_code": 0,
+      "result": "complete_local_smoke"
+    }
+  ],
+  "training_result": {
+    "completed_epochs": 2,
+    "train_loss": [
+      0.7537800371646881,
+      0.729642927646637
+    ],
+    "validation_macro_zmae": [
+      0.9450628384063681,
+      0.9242146367767706
+    ],
+    "parameter_updated": true,
+    "overfit_probe_relative_final_loss": 0.6864701032185173,
+    "checkpoint_restore_tensor_exact": true,
+    "repeated_cpu_training_tensor_exact": true,
+    "scene_macro_runner_subclass": true,
+    "two_scene_equal_weight_gate": true,
+    "overlap_uniform_mean_gate": true,
+    "fixed_validity_overlap_guard": true
+  },
+  "sha256": {
+    "config_json": "4b97bb1b9628a85ebdb82b788af578f762a63b4ffb0f7e6326d442591d426e6a",
+    "normalization": "069bdd967e982a588fbb9c2eb0f4016683b454adf84aea87e8f68590c68e4773",
+    "resolved_config": "48bc1f549779d185388ff4bb5d217cae13170a89e6dc22e23fcd57a6a15e0bb0",
+    "history": "869d624c082e624c0434f905161675bf461a6f1a1557da050941b0e4e82c7ac7",
+    "external_runner_code": "aa1fc22aad04811a667dfd417bf70da80bd33b32c007a4c66dd4e3c102ebeaaf",
+    "scene_macro_runner_code": "dde68c6d15ea1229c61315b130c14eb9790f77617648d791e8f0665dc9a3fe08",
+    "best_model": "0327e179f2abea76e3e6369b5a61e19183af664cfc8f0dc4bbf2f832bf137ddc",
+    "last_training_state": "c60a6a0847912b24abe0934e208a54729c53709a33d189c40ebf8350d5c655de"
+  },
+  "limitations": [
+    "Only six patches from three local scenes were available.",
+    "This is a CPU behavior gate; CUDA was not tested.",
+    "No formal 202/15/35 split or held-out test evaluation was performed."
+  ]
+}

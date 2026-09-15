@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cassi-core20"
+version = "0.1.0"
+description = "Direct CASSI measurement to 20-channel vegetation-index research pipeline"
+requires-python = ">=3.11,<3.15"
+dependencies = [
+  "numpy>=2,<3",
+  "torch>=2,<3",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8,<10",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["code/tests"]
+addopts = "-ra"

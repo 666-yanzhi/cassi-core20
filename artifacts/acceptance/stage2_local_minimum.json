@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "stage": 2,
+  "status": "accepted_local_minimum",
+  "accepted_on": "2026-09-15",
+  "scope": "Three-scene minimum experiment; not a 252-scene generation or hardware-calibrated optical claim.",
+  "protocol": {
+    "forward_version": "cassi_forward_v1",
+    "dispersion_step": 2,
+    "measurement_scale": 0.9,
+    "measurement_scale_semantics": "historical simulation convention; applied exactly once",
+    "model_mask_policy": "repeat_unshifted_physical_mask_v1"
+  },
+  "physical_mask": {
+    "version": "legacy_top_half_binary_v1",
+    "role": "formal",
+    "usage": "formal_simulation_baseline",
+    "physical_status": "not_hardware_calibrated",
+    "source_path": "data/mask/source/legacy_project_mask.npy",
+    "source_sha256": "9d529ec7465e5d44d589cd29b13d524f53c2702ea14ec56aa12a5d0e3cd89808",
+    "transformation": "open the highest-transmission 50 percent by deterministic stable ranking",
+    "shape": [256, 256],
+    "dtype": "float32",
+    "allowed_values": [0.0, 1.0],
+    "open_fraction": 0.5,
+    "sha256": "747b4eeb32568e281325e736feae9b989c23acbd303a20f140a9c33903ab634b"
+  },
+  "model_mask": {
+    "shape": [84, 256, 256],
+    "layout": "CHW",
+    "sha256": "5ca6cf7fd4fae3d429c091742b1e5a4f80790224b8db17d100932dc5803c0b04",
+    "shared_across_samples": true
+  },
+  "measurements": {
+    "directory": "data/derived/measurements/cassi_forward_v1/local_minimum",
+    "manifest_sha256": "99a3998b80057881776aac65faee19a1ab69c7cd79551a237a85456196e59d89",
+    "shape_per_sample": [256, 422],
+    "dtype": "float32",
+    "scene_count": 3,
+    "sample_count": 6,
+    "samples_per_scene": 2,
+    "selection": "deterministic row-major grid, stride 256, hsi_valid_mask all true",
+    "measurement_valid_mask_saved": false
+  },
+  "commands": [
+    {
+      "command": "/home/yanzhi/miniconda3/envs/deep-learning/bin/python code/derive_mask.py --existing verify",
+      "exit_code": 0,
+      "key_result": "source and derived mask hashes verified; open_fraction=0.5"
+    },
+    {
+      "command": "/home/yanzhi/miniconda3/envs/deep-learning/bin/python code/measurement_dataset.py generate-minimum --max-patches-per-scene 2 --stride 256",
+      "exit_code": 0,
+      "key_result": "3 scenes and 6 measurement samples generated"
+    },
+    {
+      "command": "/home/yanzhi/miniconda3/envs/deep-learning/bin/python code/measurement_dataset.py verify-minimum",
+      "exit_code": 0,
+      "key_result": "all 6 measurements and shared model mask recomputed and verified"
+    },
+    {
+      "command": "/home/yanzhi/miniconda3/envs/deep-learning/bin/python -m pytest -p no:cacheprovider -q",
+      "exit_code": 0,
+      "key_result": "37 passed in 0.33s"
+    }
+  ],
+  "covered_checks": [
+    "source mask provenance",
+    "mask shape, float32 type, finite values, binary values, open fraction, and SHA-256",
+    "zero input",
+    "all-one aperture golden values",
+    "measurement and model-mask shapes",
+    "determinism",
+    "invalid HSI patch rejection",
+    "atomic output and full recomputation verification"
+  ],
+  "limitations": [
+    "The supplied legacy mask is a continuous transmission map; the binary mask is a documented derived simulation baseline.",
+    "The mask has not been calibrated against a physical CASSI camera.",
+    "Only three scenes and six patches are included in this local acceptance gate."
+  ]
+}

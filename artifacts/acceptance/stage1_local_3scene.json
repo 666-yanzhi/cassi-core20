@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "stage": 1,
+  "status": "accepted_local_3scene",
+  "accepted_on": "2026-09-15",
+  "scope": "Local three-scene minimum experiment only; not evidence of 252-scene generalization.",
+  "protocols": {
+    "hsi": "hsi_reflectance_v1",
+    "labels": "reviewed_v3_core20"
+  },
+  "environment": {
+    "python": "3.14.7",
+    "numpy": "2.5.2",
+    "pytest": "9.1.1",
+    "executable": "/home/yanzhi/miniconda3/envs/deep-learning/bin/python"
+  },
+  "commands": [
+    {
+      "command": "/home/yanzhi/miniconda3/envs/deep-learning/bin/python -m pytest -p no:cacheprovider -q",
+      "exit_code": 0,
+      "key_result_at_stage_gate": "16 passed in 0.12s"
+    },
+    {
+      "command": "/home/yanzhi/miniconda3/envs/deep-learning/bin/python code/hsi_valid_mask.py --existing verify",
+      "exit_code": 0,
+      "key_result": "3 scenes verified; total_valid_mask_bytes=3876828"
+    },
+    {
+      "command": "/home/yanzhi/miniconda3/envs/deep-learning/bin/python code/lable.py --scene hsi_0001 --existing verify --tile-rows 64",
+      "exit_code": 0,
+      "key_result": "hsi_0001 verified before remaining scenes were generated"
+    },
+    {
+      "command": "/home/yanzhi/miniconda3/envs/deep-learning/bin/python code/lable.py --existing verify --tile-rows 64",
+      "exit_code": 0,
+      "key_result": "3 scenes verified; total_artifact_bytes=387645168"
+    }
+  ],
+  "scenes": [
+    {
+      "scene": "hsi_0001",
+      "source_shape": [1268, 1004, 84],
+      "source_dtype": "float32",
+      "source_sha256": "63e013f4c2d92c706a9a747092ed444c4772b73ff0755a6d4a087b691c2aae15",
+      "hsi_invalid_pixel_count": 688,
+      "hsi_valid_mask_sha256": "45ca359c146892c01174a68a79c3766331c6d799aa1eb1c60bca42e396170c70",
+      "label_shape": [1268, 1004, 20],
+      "indices_sha256": "7c82e66dba64c740542c08985d0d606c3ae99648d9343d23aca6656fa0cbebee",
+      "index_valid_mask_sha256": "9123f846a19bf43b900f6883a832a76dc71e372c3eec62854bb9e292a5a0131f"
+    },
+    {
+      "scene": "hsi_0002",
+      "source_shape": [1207, 1004, 84],
+      "source_dtype": "float32",
+      "source_sha256": "fc80726cfd2369ac240e02223b099e6758ccab04dd855ba207d37180feb987c5",
+      "hsi_invalid_pixel_count": 714,
+      "hsi_valid_mask_sha256": "a248c3f8068698e4fb9b84e8bd3d846112a6605eb3b888594b355386d4c9097b",
+      "label_shape": [1207, 1004, 20],
+      "indices_sha256": "790575962710f7c838c155fcfb4f57f6fba6f63ca69ae404ff3c9d1412b5c62f",
+      "index_valid_mask_sha256": "00f373c16eec9d8ac9fa641249ab200d067a34d392c587d36ae3182808d2ecf4"
+    },
+    {
+      "scene": "hsi_0003",
+      "source_shape": [1386, 1004, 84],
+      "source_dtype": "float32",
+      "source_sha256": "388aac247b07e3f6e3267ef9582c030cb529f5d2e4e98ca9c5269e34324d9927",
+      "hsi_invalid_pixel_count": 0,
+      "hsi_valid_mask_sha256": "e614cafd704afc8c6235e1dbc117f782378a6c4b92e320ac2b4ab6d3d2293f58",
+      "label_shape": [1386, 1004, 20],
+      "indices_sha256": "24db2c36bd4485583b6b70e610f9c91facaa88648ebd643a58f6e3b26df0a71e",
+      "index_valid_mask_sha256": "ec27b22f0e0d56ad3c443cf44565b9db04fefe7c38615c254d16833c4346b9b9"
+    }
+  ],
+  "temporary_file_count": 0,
+  "limitations": [
+    "Only three of the 252 physical samples are present locally.",
+    "This gate proves label and validity generation, not model generalization."
+  ]
+}
