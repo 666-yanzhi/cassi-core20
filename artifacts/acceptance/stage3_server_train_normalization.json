@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "scope": "formal_252_train_only_normalization",
+  "audited_on": "2026-09-15",
+  "artifact": {
+    "path": "artifacts/normalization/formal_252_train202_v1.json",
+    "sha256": "a608d31e16bc39f2b9d3ecdca28092ba11e0f46a1c307a66b4bab1ff65ed33be",
+    "normalization_version": "train_global_y_per_index_target_v1",
+    "source_manifest_sha256": "17f5bb398e0d2849b80f50756b067eeaa5a0612c818229db9582ba9dd3364f87",
+    "fit_role": "train_only",
+    "train_scene_count": 202,
+    "train_sample_count": 3523,
+    "validation_scene_overlap": 0,
+    "test_scene_overlap": 0,
+    "all_statistics_finite": true,
+    "all_standard_deviations_above_epsilon": true
+  },
+  "generation": {
+    "exit_code": 0,
+    "log": "outputs/setup_logs/stage3_normalization.log",
+    "observed_resident_memory_mib_before_fix": 13742
+  },
+  "bounded_memory_reproduction": {
+    "fix_commit": "988b3f9",
+    "exit_code": 0,
+    "log": "outputs/setup_logs/stage3_normalization_bounded_verify_v2.log",
+    "observed_resident_memory_mib": 441,
+    "temporary_artifact_sha256": "a608d31e16bc39f2b9d3ecdca28092ba11e0f46a1c307a66b4bab1ff65ed33be",
+    "matches_formal_artifact": true
+  }
+}
