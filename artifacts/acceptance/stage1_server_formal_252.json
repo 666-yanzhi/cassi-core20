@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "scope": "formal_252_scenes",
+  "audited_on": "2026-09-15",
+  "environment": {
+    "conda": "cassi",
+    "python": "3.12.12",
+    "numpy": "2.5.0"
+  },
+  "source_hsi": {
+    "scene_count": 252,
+    "filename_range": ["hsi_0001.npy", "hsi_0252.npy"],
+    "logical_bytes_gib": 79.063,
+    "dtype": "float32",
+    "layout": "HWC",
+    "bands": 84,
+    "contract_failures": 0
+  },
+  "hsi_validity": {
+    "version": "hsi_reflectance_v1",
+    "artifact_file_count": 504,
+    "scene_count": 252,
+    "total_valid_mask_bytes": 252691868,
+    "generation_exit_code": 0,
+    "full_verify_exit_code": 0,
+    "full_verify_status": "complete",
+    "log": "outputs/setup_logs/stage1a_verify.log"
+  },
+  "labels": {
+    "version": "reviewed_v3_core20",
+    "artifact_file_count": 756,
+    "scene_count": 252,
+    "total_artifact_bytes": 25266025712,
+    "generation_exit_code": 0,
+    "full_verify_exit_code": 0,
+    "full_verify_status": "complete",
+    "source_sha_mismatch_count_against_hsi_validity": 0,
+    "log": "outputs/setup_logs/stage1b_verify.log",
+    "invalid_count_by_index": {
+      "NDVI": 6105,
+      "EVI": 6105,
+      "EVI2": 6105,
+      "DVI": 6105,
+      "SR": 6105,
+      "SAVI": 6105,
+      "OSAVI": 6105,
+      "MSAVI2": 6105,
+      "WDRVI": 6105,
+      "GNDVI": 5607,
+      "CIgreen": 5607,
+      "NDRE705": 6895,
+      "NDRE720": 6535,
+      "CIrededge": 7324,
+      "MTCI": 215830,
+      "MCARI": 6370,
+      "PRI": 1932,
+      "PSRI": 6162,
+      "ARI1": 6370,
+      "CRI1": 697
+    }
+  },
+  "split": {
+    "split_id": "formal_252_split_seed42_202_15_35",
+    "manifest_sha256": "44be6122e6b44a00035777fca3585cb7d935c6dd4d3e3388afe6b19c406af5dd",
+    "train_scenes": 202,
+    "val_scenes": 15,
+    "test_scenes": 35,
+    "partition_unit": "scene",
+    "data_leakage_expected": false
+  }
+}
