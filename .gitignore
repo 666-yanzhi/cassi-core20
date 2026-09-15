@@ -9,3 +9,5 @@ __pycache__/
 
 !/data/mask/*.npy
 !/data/mask/**/*.npy
+
+/artifacts/normalization/formal_252_train202_v1.json
