@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "experiment_id": "local_mst_mamba_smoke_v1",
+  "experiment_id": "local_mst_mamba_unified_entry_v1",
   "data": {
     "split_id": "local_minimum_2_1_0",
     "manifest": "data/derived/measurements/cassi_forward_v1/local_minimum/manifest.json",

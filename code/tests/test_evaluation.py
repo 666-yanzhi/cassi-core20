@@ -13,6 +13,8 @@ if str(CODE_DIR) not in sys.path:
 
 import evaluation
 import evaluate
+from models import MSTMambaCore20, RestormerCore20
+import training
 
 
 def test_index_metrics_identity_and_negative_r2_are_preserved() -> None:
@@ -137,3 +139,14 @@ def test_formal_test_guard_requires_split_identity_and_exact_counts() -> None:
             },
         },
     )
+
+
+def test_evaluation_builds_model_selected_by_config() -> None:
+    repo_root = CODE_DIR.parent
+    restormer = training.load_resolved_config(repo_root / "configs/local_smoke.json")
+    mst_mamba = training.load_resolved_config(
+        repo_root / "configs/local_mst_mamba_smoke.json"
+    )
+
+    assert isinstance(evaluate.build_model(restormer), RestormerCore20)
+    assert isinstance(evaluate.build_model(mst_mamba), MSTMambaCore20)

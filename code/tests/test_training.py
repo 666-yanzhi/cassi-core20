@@ -16,7 +16,8 @@ if str(CODE_DIR) not in sys.path:
     sys.path.insert(0, str(CODE_DIR))
 
 import training
-from models import RestormerCore20
+from models import MSTMambaCore20, RestormerCore20
+import train
 import scene_macro_runner
 
 
@@ -88,6 +89,25 @@ def test_config_is_strict_and_resolves_paths(tmp_path: Path) -> None:
     bad_path = tmp_path / "bad.json"
     bad_path.write_text(json.dumps(payload), encoding="utf-8")
     with pytest.raises(ValueError, match="unknown=.*unexpected"):
+        training.load_resolved_config(bad_path)
+
+
+def test_one_config_loader_and_model_builder_select_both_models(tmp_path: Path) -> None:
+    restormer_config = training.load_resolved_config(REPO_ROOT / "configs/local_smoke.json")
+    mst_config = training.load_resolved_config(
+        REPO_ROOT / "configs/local_mst_mamba_smoke.json"
+    )
+
+    assert isinstance(train.build_model(restormer_config), RestormerCore20)
+    assert isinstance(train.build_model(mst_config), MSTMambaCore20)
+
+    payload = json.loads(
+        (REPO_ROOT / "configs/local_smoke.json").read_text(encoding="utf-8")
+    )
+    payload["model"]["name"] = "UnknownCore20"
+    bad_path = tmp_path / "unsupported-model.json"
+    bad_path.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(ValueError, match="unsupported model.name"):
         training.load_resolved_config(bad_path)
 
 

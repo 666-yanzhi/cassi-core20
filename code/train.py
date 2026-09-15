@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the config-driven local core20 training smoke experiment."""
+"""Train any registered Core20 model selected by config.model.name."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-from models import RestormerCore20
+import model_registry
 import scene_macro_runner
 import training
 
@@ -36,17 +36,8 @@ class Tee:
             stream.flush()
 
 
-def build_model(config: dict[str, Any]) -> RestormerCore20:
-    model = config["model"]
-    return RestormerCore20(
-        dim=model["dim"],
-        num_heads=tuple(model["num_heads"]),
-        num_blocks=tuple(model["num_blocks"]),
-        ffn_expansion_factor=model["ffn_expansion_factor"],
-        in_channels=model["in_channels"],
-        out_channels=model["out_channels"],
-        bias=model["bias"],
-    )
+def build_model(config: dict[str, Any]) -> torch.nn.Module:
+    return model_registry.build_model(config)
 
 
 def build_optimizer_and_scheduler(
@@ -74,7 +65,7 @@ def run_overfit_probe(
     *,
     steps: int = 8,
 ) -> dict[str, Any]:
-    """Prove a fresh tiny Restormer can reduce loss on one fixed sample."""
+    """Prove a fresh configured model can reduce loss on one fixed sample."""
 
     device = torch.device(config["runner"]["device"])
     measurement, model_mask, supervision = (
@@ -237,11 +228,25 @@ def run(config_path: Path, *, resume: bool = False) -> dict[str, Any]:
         Path(runner_config["runner_root"])
     )
     SceneMacroRunnerV3 = scene_macro_runner.create_scene_macro_runner_class(RunnerV3)
-    model_file = Path(sys.modules[RestormerCore20.__module__].__file__).resolve()
     training_file = Path(training.__file__).resolve()
     train_entry_file = Path(__file__).resolve()
+    registry_file = Path(model_registry.__file__).resolve()
+    model_name = config["model"]["name"]
     code_identity = {
-        "model": {"path": str(model_file), "sha256": training.sha256_file(model_file)},
+        "model": {
+            "name": model_name,
+            "files": {
+                label: {
+                    "path": str(path),
+                    "sha256": training.sha256_file(path),
+                }
+                for label, path in model_registry.source_files(model_name).items()
+            },
+        },
+        "model_registry": {
+            "path": str(registry_file),
+            "sha256": training.sha256_file(registry_file),
+        },
         "training": {
             "path": str(training_file),
             "sha256": training.sha256_file(training_file),
@@ -455,9 +460,9 @@ def run(config_path: Path, *, resume: bool = False) -> dict[str, Any]:
                 "normalization": str(experiment_dir / "normalization.json"),
             },
             "resume_command": (
-                "CUDA_VISIBLE_DEVICES=1 CUBLAS_WORKSPACE_CONFIG=:4096:8 "
+                "CUBLAS_WORKSPACE_CONFIG=:4096:8 "
                 "/home/user/anaconda3/envs/cassi/bin/python code/train.py "
-                "--config config.json --resume"
+                f"--config {config['source_config']} --resume"
             ),
             "formal_test": {
                 "completed": False,

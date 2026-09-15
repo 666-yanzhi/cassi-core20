@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stitch core20 patch predictions and evaluate them in original index space."""
+"""Evaluate any registered Core20 model selected by config.model.name."""
 
 from __future__ import annotations
 
@@ -15,24 +15,15 @@ import numpy as np
 import torch
 
 import evaluation
-from models import RestormerCore20
+import model_registry
 import training
 
 
 FORMAL_SPLIT_ID = "formal_252_split_seed42_202_15_35"
 
 
-def build_model(config: dict[str, Any]) -> RestormerCore20:
-    model = config["model"]
-    return RestormerCore20(
-        dim=model["dim"],
-        num_heads=tuple(model["num_heads"]),
-        num_blocks=tuple(model["num_blocks"]),
-        ffn_expansion_factor=model["ffn_expansion_factor"],
-        in_channels=model["in_channels"],
-        out_channels=model["out_channels"],
-        bias=model["bias"],
-    )
+def build_model(config: dict[str, Any]) -> torch.nn.Module:
+    return model_registry.build_model(config)
 
 
 def _scene_samples(manifest: dict[str, Any], scene: str) -> list[dict[str, Any]]:
@@ -315,10 +306,16 @@ def run(config_path: Path, split: str, output_dir: Path | None = None) -> dict[s
             "sha256": training.sha256_file(checkpoint_path),
         },
         "model_code": {
-            "path": str(Path(sys.modules[RestormerCore20.__module__].__file__).resolve()),
-            "sha256": training.sha256_file(
-                Path(sys.modules[RestormerCore20.__module__].__file__).resolve()
-            ),
+            "name": config["model"]["name"],
+            "files": {
+                label: {
+                    "path": str(path),
+                    "sha256": training.sha256_file(path),
+                }
+                for label, path in model_registry.source_files(
+                    config["model"]["name"]
+                ).items()
+            },
         },
         "config": {
             "path": config["source_config"],

@@ -48,12 +48,21 @@ python code/measurement_dataset.py verify-formal
 # 本地三景核验
 python code/measurement_dataset.py verify-minimum
 
-# 第三阶段：配置驱动训练；实验目录存在时拒绝覆盖
+# 第三/五阶段：统一配置驱动训练；model.name 选择模型
+# RestormerCore20
 python code/fit_normalization.py --config config.json
 CUDA_VISIBLE_DEVICES=1 CUBLAS_WORKSPACE_CONFIG=:4096:8 \
   python code/smoke_cuda.py --config config.json
 CUDA_VISIBLE_DEVICES=1 CUBLAS_WORKSPACE_CONFIG=:4096:8 \
   python code/train.py --config config.json
+
+# MSTMambaCore20：入口完全相同，只换配置
+CUDA_VISIBLE_DEVICES=0 CUBLAS_WORKSPACE_CONFIG=:4096:8 \
+  PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
+  python code/smoke_cuda.py --config configs/formal_mst_mamba_seed42.json
+CUDA_VISIBLE_DEVICES=0 CUBLAS_WORKSPACE_CONFIG=:4096:8 \
+  PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
+  python code/train.py --config configs/formal_mst_mamba_seed42.json
 
 # 从每轮结束时保存的完整状态继续
 CUDA_VISIBLE_DEVICES=1 CUBLAS_WORKSPACE_CONFIG=:4096:8 \
@@ -62,21 +71,16 @@ CUDA_VISIBLE_DEVICES=1 CUBLAS_WORKSPACE_CONFIG=:4096:8 \
 # 本地三景训练使用保留配置
 python code/train.py --config configs/local_smoke.json
 
-# 第四阶段：本地验证诊断
+# 第四阶段：统一测试/评估入口；同样由配置选择模型
 python code/evaluate.py --config config.json --split validation
-
-# 第五阶段：MST-Mamba 接口与 GPU 门禁
-python code/train_mst_mamba.py --config configs/local_mst_mamba_smoke.json
-CUDA_VISIBLE_DEVICES=0 CUBLAS_WORKSPACE_CONFIG=:4096:8 \
-  PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
-  python code/smoke_mst_mamba_cuda.py \
-  --config configs/formal_mst_mamba_seed42.json \
-  --output artifacts/acceptance/stage5_mst_mamba_server_cuda_smoke.json
+python code/evaluate.py \
+  --config configs/formal_mst_mamba_seed42.json --split validation
 ```
 
-各入口的完整参数以 `--help` 为准。正式训练唯一可调配置源是项目根目录的
-`config.json`，相对路径均按项目根目录解析。逐字段中文说明见
-`config.example.jsonc`；它包含注释，因此只供阅读，不能直接作为训练配置。
+各入口的完整参数以 `--help` 为准。训练、CUDA 门禁和评估共用同一个配置解析器与
+模型注册表；只需向统一入口传入不同 JSON，并在 `model.name` 与对应模型参数块中选择
+模型。相对路径均按项目根目录解析。逐字段中文说明见 `config.example.jsonc`；它包含
+注释，因此只供阅读，不能直接作为训练配置。
 
 ## 当前协议边界
 
@@ -111,7 +115,7 @@ screen -r cassi_mst_mamba_core20
 # 从最近完整 epoch 状态恢复时，须先确认旧任务已经退出
 CUDA_VISIBLE_DEVICES=0 CUBLAS_WORKSPACE_CONFIG=:4096:8 \
   PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
-  python code/train_mst_mamba.py \
+  python code/train.py \
   --config configs/formal_mst_mamba_seed42.json --resume
 
 # 不进入会话也可查看训练输出
@@ -127,6 +131,6 @@ tail -f outputs/setup_logs/formal_mst_mamba_screen.log
 
 阶段验收记录位于 `artifacts/acceptance/`；训练产物和评估结果位于
 `outputs/<experiment_id>/`。`outputs/` 和大型 NPY 均被 Git 忽略，JSON 元数据与验收记录保留。
-正式训练的控制台输出同时写入 `outputs/formal_restormer_core20_seed42_v1/train.log`；
+正式训练的控制台输出同时写入 `outputs/<experiment_id>/train.log`；
 每轮结束会原子保存 `history.json` 和 `last_training_state.pt`。只有训练正常结束或满足提前停止条件后，
 才会生成 `formal_training_report.json`；后台进程仍在运行不等于训练已经完成。

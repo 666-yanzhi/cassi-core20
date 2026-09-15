@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run one real-data CUDA optimization step for the configured training split."""
+"""Run one real-data CUDA step for any model selected by config.model.name."""
 
 from __future__ import annotations
 

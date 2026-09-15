@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "status": "running",
-  "claim": "formal MST-Mamba training was launched and observed alive; training completion and convergence are not claimed",
+  "status": "stopped_for_unified_entrypoint_refactor",
+  "claim": "formal MST-Mamba training was launched but stopped before one complete epoch so training could migrate to a unified config-driven entrypoint",
   "observed_at": "2026-09-15T22:40:27+08:00",
   "server": "10.14.114.169",
   "working_directory": "/home/user/programs/cassi-core20",
@@ -43,6 +43,12 @@
     "resource contention and thermal throttling may increase training time",
     "no existing GPU process was stopped for this launch"
   ],
+  "stop": {
+    "exit_code": 130,
+    "completed_epochs": 0,
+    "reason": "replace model-specific train and smoke scripts with unified config-driven entrypoints",
+    "old_outputs_preserved": true
+  },
   "completion_predicate": [
     "screen session cassi_mst_mamba_core20 has exited",
     "outputs/setup_logs/formal_mst_mamba_screen.exit contains 0",

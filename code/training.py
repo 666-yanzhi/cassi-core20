@@ -17,6 +17,8 @@ import torch
 from torch import nn
 from torch.utils.data import Dataset
 
+import model_registry
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 NORMALIZATION_VERSION = "train_global_y_per_index_target_v1"
@@ -121,16 +123,6 @@ def load_resolved_config(path: Path) -> dict[str, Any]:
             "num_workers",
         },
         "normalization": {"epsilon"},
-        "model": {
-            "name",
-            "dim",
-            "num_heads",
-            "num_blocks",
-            "ffn_expansion_factor",
-            "in_channels",
-            "out_channels",
-            "bias",
-        },
         "loss": {"name", "epsilon"},
         "optimizer": {"name", "learning_rate", "weight_decay"},
         "scheduler": {"name", "t_max", "eta_min"},
@@ -158,6 +150,7 @@ def load_resolved_config(path: Path) -> dict[str, Any]:
         if not isinstance(config[group], dict):
             raise TypeError(f"config.{group} must be an object")
         _require_keys_exact(config[group], fields, f"config.{group}")
+    model_registry.validate_model_config(config["model"])
 
     if config["schema_version"] != 1:
         raise ValueError("config.schema_version must be 1")
@@ -216,22 +209,6 @@ def load_resolved_config(path: Path) -> dict[str, Any]:
     normalization = config["normalization"]
     if not isinstance(normalization["epsilon"], (int, float)) or normalization["epsilon"] <= 0:
         raise ValueError("normalization.epsilon must be positive")
-    model = config["model"]
-    expected_model = {"name": "RestormerCore20", "in_channels": 84, "out_channels": 20}
-    for key, expected in expected_model.items():
-        if model[key] != expected:
-            raise ValueError(f"model.{key} must be {expected!r}")
-    if not isinstance(model["dim"], int) or model["dim"] <= 0:
-        raise ValueError("model.dim must be a positive integer")
-    if (
-        not isinstance(model["num_heads"], list)
-        or not isinstance(model["num_blocks"], list)
-        or len(model["num_heads"]) != len(model["num_blocks"])
-        or not model["num_heads"]
-    ):
-        raise ValueError("model num_heads and num_blocks must be equal nonempty lists")
-    if model["bias"] not in (True, False):
-        raise TypeError("model.bias must be boolean")
     if config["loss"]["name"] != "MaskedBalancedCharbonnier":
         raise ValueError("loss.name must be MaskedBalancedCharbonnier")
     if config["optimizer"]["name"] != "AdamW":

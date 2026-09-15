@@ -1,5 +1,5 @@
 {
-  // 字段说明。程序只读取根目录 config.json；此 JSONC 仅供阅读，不能直接用于训练。
+  // 字段说明。train.py、smoke_cuda.py 和 evaluate.py 都读取 --config 指定的 JSON；此 JSONC 仅供阅读。
   "schema_version": 1, // 配置结构版本。
   "experiment_id": "formal_restormer_core20_seed42_v1", // 独立输出目录名；已有目录拒绝覆盖。
   "data": {
@@ -16,7 +16,7 @@
   },
   "normalization": {"epsilon": 1e-6}, // 标准差过小时拒绝训练。
   "model": {
-    "name": "RestormerCore20", // 第一版迁移旧项目 Restormer。
+    "name": "RestormerCore20", // 由此字段选择模型；MSTMambaCore20 的完整字段见 configs/formal_mst_mamba_seed42.json。
     "dim": 48, // 旧模型默认基础特征维数。
     "num_heads": [1, 2, 4, 8], // 编码层与瓶颈层注意力头数。
     "num_blocks": [4, 6, 6, 8], // 编码层与瓶颈层块数。

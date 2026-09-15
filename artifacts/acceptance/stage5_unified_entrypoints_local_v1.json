@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "claim": "one train.py and one evaluate.py select RestormerCore20 or MSTMambaCore20 through config.model.name",
+  "environment": "deep-learning",
+  "checks": {
+    "full_test_suite": {
+      "result": "66 passed",
+      "elapsed_seconds": 6.01
+    },
+    "RestormerCore20": {
+      "config": "configs/local_smoke.json",
+      "train_entry": "code/train.py",
+      "evaluation_entry": "code/evaluate.py",
+      "completed_epochs": 2,
+      "checkpoint_restore_passed": true,
+      "validation_scene_count": 1,
+      "validation_scope": "local_validation_diagnostic"
+    },
+    "MSTMambaCore20": {
+      "config": "configs/local_mst_mamba_smoke.json",
+      "train_entry": "code/train.py",
+      "evaluation_entry": "code/evaluate.py",
+      "completed_epochs": 2,
+      "checkpoint_restore_passed": true,
+      "validation_scene_count": 1,
+      "validation_scope": "local_validation_diagnostic"
+    }
+  },
+  "boundaries": [
+    "three-scene CPU behavior gate only",
+    "not formal convergence or generalization evidence",
+    "server CUDA gates must pass again before formal restart"
+  ]
+}

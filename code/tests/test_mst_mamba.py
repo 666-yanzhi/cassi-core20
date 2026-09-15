@@ -15,7 +15,8 @@ if str(CODE_DIR) not in sys.path:
 from models import MSTMambaCore20
 from models.mst_mamba_core20.blocks import MaskAwareMambaMixer
 from models.mst_mamba_core20.pscan import pscan
-import train_mst_mamba
+import train
+import training
 
 
 def tiny_model() -> MSTMambaCore20:
@@ -91,8 +92,8 @@ def test_mask_attention_keeps_distinct_batch_masks() -> None:
 
 def test_formal_mst_config_is_strict_and_builds_model(tmp_path: Path) -> None:
     path = REPO_ROOT / "configs/formal_mst_mamba_seed42.json"
-    config = train_mst_mamba.load_resolved_config(path)
-    model = train_mst_mamba.build_model(config)
+    config = training.load_resolved_config(path)
+    model = train.build_model(config)
 
     assert config["experiment_id"] == "formal_mst_mamba_core20_seed42_v1"
     assert config["model"]["name"] == "MSTMambaCore20"
@@ -105,7 +106,7 @@ def test_formal_mst_config_is_strict_and_builds_model(tmp_path: Path) -> None:
     bad_path = tmp_path / "bad-mst.json"
     bad_path.write_text(payload, encoding="utf-8")
     with pytest.raises(ValueError, match="84 input and 20 output"):
-        train_mst_mamba.load_resolved_config(bad_path)
+        training.load_resolved_config(bad_path)
 
 
 def test_mst_mamba_rejects_nonprotocol_shapes() -> None:
