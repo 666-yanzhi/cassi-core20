@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "status": "running",
+  "claim": "formal MST-Mamba training was launched and observed alive; training completion and convergence are not claimed",
+  "observed_at": "2026-09-15T22:40:27+08:00",
+  "server": "10.14.114.169",
+  "working_directory": "/home/user/programs/cassi-core20",
+  "repository_commit_at_launch": "b309b25",
+  "screen": {
+    "session": "cassi_mst_mamba_core20",
+    "pid": 1866357,
+    "state": "Detached"
+  },
+  "training": {
+    "pid": 1866361,
+    "process_started_at": "2026-09-15T22:38:04+08:00",
+    "config": "configs/formal_mst_mamba_seed42.json",
+    "config_sha256": "d871b9f9c3173abf3a7f6599d2ead42b17f0c9c4cdfc3225df30519fbef97594",
+    "experiment_id": "formal_mst_mamba_core20_seed42_v1",
+    "physical_gpu": 0,
+    "environment": {
+      "CUDA_VISIBLE_DEVICES": "0",
+      "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+      "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"
+    }
+  },
+  "paths": {
+    "screen_log": "outputs/setup_logs/formal_mst_mamba_screen.log",
+    "exit_code": "outputs/setup_logs/formal_mst_mamba_screen.exit",
+    "experiment_dir": "outputs/formal_mst_mamba_core20_seed42_v1",
+    "resolved_config": "outputs/formal_mst_mamba_core20_seed42_v1/resolved_config.json"
+  },
+  "launch_observation": {
+    "gpu_memory_used_mib": 21134,
+    "gpu_memory_total_mib": 24576,
+    "gpu_utilization_percent": 100,
+    "gpu_temperature_c": 87,
+    "training_process_memory_mib": 12132,
+    "exit_file_present": false
+  },
+  "risks": [
+    "physical GPU0 is shared with pre-existing processes",
+    "resource contention and thermal throttling may increase training time",
+    "no existing GPU process was stopped for this launch"
+  ],
+  "completion_predicate": [
+    "screen session cassi_mst_mamba_core20 has exited",
+    "outputs/setup_logs/formal_mst_mamba_screen.exit contains 0",
+    "outputs/formal_mst_mamba_core20_seed42_v1/formal_training_report.json exists",
+    "outputs/formal_mst_mamba_core20_seed42_v1/best_model.pt exists",
+    "outputs/formal_mst_mamba_core20_seed42_v1/last_training_state.pt exists"
+  ]
+}
