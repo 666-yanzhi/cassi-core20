@@ -10,8 +10,8 @@
     "val_scenes": ["实际 config.json 中列出 15 景"], // 用 macro_zMAE 选 checkpoint。
     "test_scenes": ["实际 config.json 中列出 35 景"], // 冻结后仅做一次最终评价。
     "patch_size": 256, // 协议固定。
-    "batch_size": 1, // 训练 batch；3090 首版用 1。
-    "val_batch_size": 1, // 分批验证，避免验证集一次塞满显存。
+    "batch_size": 2, // 3090 实测单步峰值约 13.99 GiB，比 B=1 更高效且保留余量。
+    "val_batch_size": 2, // 分批验证，避免验证集一次塞满显存。
     "num_workers": 4 // DataLoader 子进程数。
   },
   "normalization": {"epsilon": 1e-6}, // 标准差过小时拒绝训练。

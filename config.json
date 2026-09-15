@@ -9,8 +9,8 @@
     "val_scenes": ["hsi_0011","hsi_0013","hsi_0028","hsi_0043","hsi_0079","hsi_0080","hsi_0085","hsi_0099","hsi_0126","hsi_0131","hsi_0198","hsi_0202","hsi_0222","hsi_0226","hsi_0227"],
     "test_scenes": ["hsi_0004","hsi_0010","hsi_0016","hsi_0022","hsi_0030","hsi_0045","hsi_0046","hsi_0052","hsi_0062","hsi_0067","hsi_0073","hsi_0096","hsi_0100","hsi_0105","hsi_0106","hsi_0107","hsi_0123","hsi_0125","hsi_0132","hsi_0162","hsi_0165","hsi_0168","hsi_0171","hsi_0176","hsi_0194","hsi_0200","hsi_0203","hsi_0204","hsi_0212","hsi_0218","hsi_0219","hsi_0223","hsi_0246","hsi_0251","hsi_0252"],
     "patch_size": 256,
-    "batch_size": 1,
-    "val_batch_size": 1,
+    "batch_size": 2,
+    "val_batch_size": 2,
     "num_workers": 4
   },
   "normalization": {"epsilon": 1e-06},

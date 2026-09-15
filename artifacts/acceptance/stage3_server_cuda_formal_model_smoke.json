@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "scope": "formal_model_single_batch_behavior_gate",
+  "audited_on": "2026-09-15",
+  "host": "user-System-Product-Name",
+  "environment": {
+    "conda": "cassi",
+    "python": "3.12.12",
+    "torch": "2.4.0+cu124",
+    "cuda_runtime": "12.4",
+    "physical_gpu": 1,
+    "gpu": "NVIDIA GeForce RTX 3090"
+  },
+  "determinism": {
+    "torch_use_deterministic_algorithms": true,
+    "cublas_workspace_config": ":4096:8",
+    "seed": 42
+  },
+  "model": {
+    "name": "RestormerCore20",
+    "dim": 48,
+    "num_heads": [1, 2, 4, 8],
+    "num_blocks": [4, 6, 6, 8],
+    "ffn_expansion_factor": 2.66,
+    "parameter_count": 24508056,
+    "output_shape": [1, 20, 256, 256]
+  },
+  "operation": {
+    "batch_size": 1,
+    "measurement_shape": [1, 256, 422],
+    "model_mask_shape": [1, 84, 256, 256],
+    "forward": true,
+    "masked_loss": true,
+    "backward": true,
+    "adamw_step": true,
+    "prediction_finite": true,
+    "loss": 0.07413903623819351,
+    "elapsed_seconds": 2.0455894470214844,
+    "peak_memory_mib": 7081.064453125
+  },
+  "batch_size_selection": {
+    "selected": 2,
+    "output_shape": [2, 20, 256, 256],
+    "prediction_finite": true,
+    "loss": 0.07418080419301987,
+    "elapsed_seconds": 2.8052563667297363,
+    "peak_memory_mib": 13985.7734375,
+    "reason": "Higher throughput than batch 1 while retaining substantial headroom on a 24 GiB RTX 3090."
+  },
+  "claim_boundary": "This proves one synthetic CUDA optimization step only; it is not formal-data training or generalization evidence."
+}
