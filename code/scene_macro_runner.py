@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any
+from pathlib import Path
+from typing import Any, Callable
 
 import numpy as np
 import torch
@@ -87,7 +88,109 @@ class _SceneErrorAccumulator:
 
 
 class SceneMacroValidationMixin:
-    """Override only validation aggregation; inherit the RunnerV3 lifecycle."""
+    """Add scene-macro validation and epoch-boundary recovery checkpoints."""
+
+    def fit(
+        self,
+        train_loader: Any,
+        dev_loader: Any = None,
+        num_epochs: int = 100,
+        log_every: int | None = 10,
+        best_path: Path | str | None = None,
+        grad_clip_norm: float | None = None,
+        lr_scheduler: Any = None,
+        patience: int | None = None,
+        seed: int | None = None,
+        *,
+        start_epoch: int = 0,
+        initial_best: float | None = None,
+        initial_no_improve: int = 0,
+        epoch_end_callback: Callable[[int, float, int], None] | None = None,
+    ) -> None:
+        """Run the RunnerV3 lifecycle and expose a safe epoch-boundary callback."""
+
+        if not 0 <= start_epoch <= num_epochs:
+            raise ValueError("start_epoch must be between zero and num_epochs")
+        if initial_no_improve < 0:
+            raise ValueError("initial_no_improve must be nonnegative")
+        if seed is not None:
+            torch.manual_seed(seed)
+        if initial_best is None:
+            best = -float("inf") if self.higher_is_better else float("inf")
+        else:
+            best = float(initial_best)
+        no_improve = initial_no_improve
+
+        for epoch in range(start_epoch, num_epochs):
+            self.model.train()
+            running = 0.0
+            sample_count = 0
+            for batch in train_loader:
+                *inputs, supervision = self._to_device(batch)
+                self.optimizer.zero_grad(set_to_none=True)
+                loss = self.loss_fn(self.model(*inputs), supervision)
+                loss.backward()
+                if grad_clip_norm is not None:
+                    torch.nn.utils.clip_grad_norm_(
+                        self.model.parameters(), grad_clip_norm
+                    )
+                self.optimizer.step()
+                batch_size = inputs[0].size(0)
+                running += loss.item() * batch_size
+                sample_count += batch_size
+                self.history["train_step_loss"].append(loss.item())
+            if sample_count == 0:
+                raise ValueError("training loader yielded no samples")
+            train_loss = running / sample_count
+            self.history["train_loss"].append(train_loss)
+            self.history["lr"].append(self.optimizer.param_groups[0]["lr"])
+            if lr_scheduler is not None:
+                lr_scheduler.step()
+
+            should_log = log_every is not None and (epoch + 1) % log_every == 0
+            should_stop = False
+            if dev_loader is not None:
+                dev_loss, dev_metric = self._eval(dev_loader)
+                self.history["dev_loss"].append(dev_loss)
+                self.history["dev_metric"].append(dev_metric)
+                improved = (
+                    dev_metric > best
+                    if self.higher_is_better
+                    else dev_metric < best
+                )
+                if improved:
+                    best = dev_metric
+                    no_improve = 0
+                    if best_path is not None:
+                        best_path = Path(best_path)
+                        best_path.parent.mkdir(parents=True, exist_ok=True)
+                        training.atomic_torch_save(best_path, self.model.state_dict())
+                else:
+                    no_improve += 1
+                if should_log:
+                    tag = " *" if improved else ""
+                    print(
+                        f"epoch {epoch + 1:4d}  train_loss={train_loss:.4f}  "
+                        f"dev_loss={dev_loss:.4f}  dev_metric={dev_metric:.4f}{tag}",
+                        flush=True,
+                    )
+                should_stop = patience is not None and no_improve >= patience
+            elif should_log:
+                print(
+                    f"epoch {epoch + 1:4d}  train_loss={train_loss:.4f}",
+                    flush=True,
+                )
+
+            if epoch_end_callback is not None:
+                epoch_end_callback(epoch + 1, best, no_improve)
+            if should_stop:
+                if log_every is not None:
+                    print(
+                        f"early stop at epoch {epoch + 1} "
+                        f"(no improvement for {patience} epochs)",
+                        flush=True,
+                    )
+                break
 
     @torch.no_grad()
     def _eval(self, loader: Any) -> tuple[float, float]:

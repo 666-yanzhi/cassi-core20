@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "status": "architecture_migrated_weights_unavailable",
+  "audited_on": "2026-09-15",
+  "legacy": {
+    "project": "/home/user/programs/SCI/vegindex/CASSI-VegIndex",
+    "config_path": "code/cfg.py",
+    "config_sha256": "d3d2f58d18dac666d8b5c209642cf3854c6d781c17d0986fc3d24e9b50c67d75",
+    "model_path": "code/models/restormer/Restormer_VegIdx.py",
+    "model_sha256": "d3063679b88084015e6941c3705f40ebf5a42caf1bd96b82d868d4d75a88939b",
+    "declared_output_channels": 32,
+    "declared_checkpoint": "result/model/restormer/restormer_ep300_lr1e-04_bs1.pth",
+    "declared_checkpoint_exists": false
+  },
+  "core20": {
+    "model_path": "code/models/restormer_core20.py",
+    "model_sha256": "bc43641dd834480a89a20afc9b3ab644574afeb598f8462caf3570db2a6778ab",
+    "input_channels": 84,
+    "output_channels": 20,
+    "retained": [
+      "measurement window unfolding with dispersion step 2",
+      "84-channel embedding and LeakyReLU",
+      "LayerNorm2d, mask-guided MDTA, and GDFN blocks",
+      "learned 84-channel mask downsampling in every encoder stage",
+      "U-Net encoder, bottleneck, decoder, and skip fusion",
+      "formal defaults dim=48, heads=[1,2,4,8], blocks=[4,6,6,8], ffn=2.66"
+    ],
+    "changed": [
+      "the output head is newly initialized with 20 channels for reviewed_v3_core20",
+      "input shapes, dtypes, and fixed protocol channels are checked explicitly",
+      "initial_x is described as measurement-window unfolding, not complete HSI reconstruction",
+      "module names were clarified; legacy state-dict keys are therefore not silently loaded"
+    ]
+  },
+  "checkpoint_migration": {
+    "performed": false,
+    "reason": "The legacy cfg.py points to a Restormer checkpoint that is absent on the server. Existing IFGNet, WPO3D, and MST-Mamba checkpoints use other architectures and the old 32-channel label protocol."
+  }
+}

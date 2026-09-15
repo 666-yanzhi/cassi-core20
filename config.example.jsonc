@@ -1,0 +1,55 @@
+{
+  // 字段说明。程序只读取根目录 config.json；此 JSONC 仅供阅读，不能直接用于训练。
+  "schema_version": 1, // 配置结构版本。
+  "experiment_id": "formal_restormer_core20_seed42_v1", // 独立输出目录名；已有目录拒绝覆盖。
+  "data": {
+    "split_id": "formal_252_split_seed42_202_15_35", // 冻结的 202/15/35 场景划分。
+    "manifest": "data/derived/measurements/cassi_forward_v1/formal_252_stride256/manifest.json", // 测量与坐标清单。
+    "normalization": "artifacts/normalization/formal_252_train202_v1.json", // 只用训练集拟合。
+    "train_scenes": ["实际 config.json 中列出 202 景"], // 训练和拟合统计量。
+    "val_scenes": ["实际 config.json 中列出 15 景"], // 用 macro_zMAE 选 checkpoint。
+    "test_scenes": ["实际 config.json 中列出 35 景"], // 冻结后仅做一次最终评价。
+    "patch_size": 256, // 协议固定。
+    "batch_size": 1, // 训练 batch；3090 首版用 1。
+    "val_batch_size": 1, // 分批验证，避免验证集一次塞满显存。
+    "num_workers": 4 // DataLoader 子进程数。
+  },
+  "normalization": {"epsilon": 1e-6}, // 标准差过小时拒绝训练。
+  "model": {
+    "name": "RestormerCore20", // 第一版迁移旧项目 Restormer。
+    "dim": 48, // 旧模型默认基础特征维数。
+    "num_heads": [1, 2, 4, 8], // 编码层与瓶颈层注意力头数。
+    "num_blocks": [4, 6, 6, 8], // 编码层与瓶颈层块数。
+    "ffn_expansion_factor": 2.66, // GDFN 扩张系数。
+    "in_channels": 84, // CASSI 测量展开通道数，固定。
+    "out_channels": 20, // reviewed_v3_core20 输出数，固定。
+    "bias": false // 与旧 Restormer 默认设置一致。
+  },
+  "loss": {"name": "MaskedBalancedCharbonnier", "epsilon": 0.001}, // 逐指数等权且只统计有效标签。
+  "optimizer": {"name": "AdamW", "learning_rate": 0.0001, "weight_decay": 0.0001},
+  "scheduler": {"name": "CosineAnnealingLR", "t_max": 300, "eta_min": 0.000001},
+  "runner": {
+    "runner_root": "/home/user/programs/nndl-practice/pytorch", // 本机复制到服务器的 RunnerV3 根目录。
+    "epochs": 300,
+    "device": "cuda", // 启动时由 CUDA_VISIBLE_DEVICES 选择物理 GPU。
+    "seed": 42,
+    "gradient_clip_norm": 1.0,
+    "early_stopping_patience": 30,
+    "log_every": 1,
+    "run_overfit_probe": false // 正式训练不重复微型 CPU 过拟合门禁。
+  },
+  "metrics": {
+    "checkpoint": "macro_zMAE", // 验证场景与指数等权的标准化 MAE。
+    "report": ["MAE", "RMSE", "Bias", "R2"], // 原始指数空间正式指标。
+    "aggregation": "scene_macro",
+    "r2_variance_threshold": 1e-12,
+    "overlap_fusion": "uniform_mean"
+  },
+  "protocol": {
+    "label": "reviewed_v3_core20",
+    "forward": "cassi_forward_v1",
+    "training": "core20_training_v1",
+    "metrics": "core20_metrics_v1"
+  },
+  "output": {"root": "outputs"}
+}

@@ -84,3 +84,29 @@ def test_valid_patch_origins_are_deterministic_and_reject_bad_inputs() -> None:
 def test_model_mask_policy_is_recorded_in_forward_module() -> None:
     assert cassi_forward.MODEL_MASK_POLICY == "repeat_unshifted_physical_mask_v1"
     assert cassi_forward.MEASUREMENT_SCALE == 0.9
+
+
+def test_formal_split_loader_requires_exact_frozen_partition(tmp_path: Path) -> None:
+    split_path = tmp_path / "split.json"
+    payload = {
+        "seed": 42,
+        "partition_unit": "scene",
+        "physical_independence_confirmed": True,
+        "split_hash": "historical-hash",
+        "train": list(range(1, 203)),
+        "val": list(range(203, 218)),
+        "test": list(range(218, 253)),
+    }
+    split_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = measurement_dataset.load_formal_scene_split(split_path)
+
+    assert result["split_id"] == measurement_dataset.FORMAL_SPLIT_ID
+    assert len(result["train_scenes"]) == 202
+    assert result["train_scenes"][0] == "hsi_0001"
+    assert result["test_scenes"][-1] == "hsi_0252"
+
+    payload["test"][-1] = 251
+    split_path.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(ValueError, match="unique integers"):
+        measurement_dataset.load_formal_scene_split(split_path)

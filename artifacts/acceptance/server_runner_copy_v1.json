@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "status": "verified",
+  "audited_on": "2026-09-15",
+  "source_path": "/home/yanzhi/project/nndl-practice/pytorch/nndl/runner.py",
+  "destination_path": "/home/user/programs/nndl-practice/pytorch/nndl/runner.py",
+  "sha256": "aa1fc22aad04811a667dfd417bf70da80bd33b32c007a4c66dd4e3c102ebeaaf",
+  "import_test": {
+    "environment": "/home/user/anaconda3/envs/cassi",
+    "class": "nndl.runner.RunnerV3",
+    "passed": true
+  },
+  "source_repository_modified": false
+}

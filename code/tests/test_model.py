@@ -49,6 +49,23 @@ def test_tiny_restormer_has_fixed_output_and_gradients() -> None:
     )
 
 
+def test_legacy_learned_mask_downsampling_is_retained() -> None:
+    model = RestormerCore20(
+        dim=4,
+        num_heads=(1, 2),
+        num_blocks=(1, 1),
+        ffn_expansion_factor=1.5,
+    )
+
+    assert len(model.encoders[0]) == 3
+    mask_downsample = model.encoders[0][2]
+    assert isinstance(mask_downsample, torch.nn.Conv2d)
+    assert mask_downsample.in_channels == 84
+    assert mask_downsample.out_channels == 84
+    assert mask_downsample.kernel_size == (4, 4)
+    assert mask_downsample.stride == (2, 2)
+
+
 def test_model_rejects_nonprotocol_channels_and_shapes() -> None:
     with pytest.raises(ValueError, match="out_channels"):
         RestormerCore20(out_channels=32)

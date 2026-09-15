@@ -1,4 +1,4 @@
-# CASSI Core20 最小实验
+# CASSI Core20 正式基线
 
 本目录按《项目搭建工作流》实现从 84 波段 HSI 到 20 通道植被指数的四阶段流程：
 
@@ -7,7 +7,8 @@
 3. `(measurement, model_mask) -> 20 通道指数` 的 Restormer 训练；
 4. Patch 按原坐标拼接，并在原始指数空间执行场景宏平均评估。
 
-当前只有 3 个 HSI，因此所有现有训练和评估结果均是本地行为门禁，不是正式泛化结果。
+根目录配置已切换到服务器 252 景正式基线；三景配置仍保存在
+`configs/local_smoke.json`，其结果只用于行为门禁，不是正式泛化结果。
 
 ## 环境
 
@@ -15,6 +16,14 @@
 cd /home/yanzhi/project/CASSI/cassi
 source /home/yanzhi/miniconda3/etc/profile.d/conda.sh
 conda activate deep-learning
+```
+
+服务器使用：
+
+```bash
+cd /home/user/programs/cassi-core20
+source /home/user/anaconda3/etc/profile.d/conda.sh
+conda activate cassi
 ```
 
 ## 测试
@@ -30,18 +39,27 @@ pytest -q
 python code/hsi_valid_mask.py --existing verify
 python code/lable.py --existing verify
 
-# 第二阶段：核验现有最小测量集
+# 第二阶段：生成并核验正式 252 景测量集
+python code/measurement_dataset.py generate-formal \
+  --split-manifest data/manifests/formal_252_split_seed42_202_15_35.json
+python code/measurement_dataset.py verify-formal
+
+# 本地三景核验
 python code/measurement_dataset.py verify-minimum
 
 # 第三阶段：配置驱动训练；实验目录存在时拒绝覆盖
 python code/train.py --config config.json
 
+# 本地三景训练使用保留配置
+python code/train.py --config configs/local_smoke.json
+
 # 第四阶段：本地验证诊断
 python code/evaluate.py --config config.json --split validation
 ```
 
-各入口的完整参数以 `--help` 为准。训练唯一可调配置源是项目根目录的
-`config.json`，相对路径均按项目根目录解析。
+各入口的完整参数以 `--help` 为准。正式训练唯一可调配置源是项目根目录的
+`config.json`，相对路径均按项目根目录解析。逐字段中文说明见
+`config.example.jsonc`；它包含注释，因此只供阅读，不能直接作为训练配置。
 
 ## 当前协议边界
 

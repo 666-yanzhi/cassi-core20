@@ -117,6 +117,7 @@ def load_resolved_config(path: Path) -> dict[str, Any]:
             "test_scenes",
             "patch_size",
             "batch_size",
+            "val_batch_size",
             "num_workers",
         },
         "normalization": {"epsilon"},
@@ -141,6 +142,7 @@ def load_resolved_config(path: Path) -> dict[str, Any]:
             "gradient_clip_norm",
             "early_stopping_patience",
             "log_every",
+            "run_overfit_probe",
         },
         "metrics": {
             "checkpoint",
@@ -168,6 +170,8 @@ def load_resolved_config(path: Path) -> dict[str, Any]:
         raise ValueError(f"data.patch_size must be {PATCH_SIZE}")
     if not isinstance(data["batch_size"], int) or data["batch_size"] <= 0:
         raise ValueError("data.batch_size must be a positive integer")
+    if not isinstance(data["val_batch_size"], int) or data["val_batch_size"] <= 0:
+        raise ValueError("data.val_batch_size must be a positive integer")
     if not isinstance(data["num_workers"], int) or data["num_workers"] < 0:
         raise ValueError("data.num_workers must be a nonnegative integer")
     train_scenes = data["train_scenes"]
@@ -179,6 +183,15 @@ def load_resolved_config(path: Path) -> dict[str, Any]:
         raise ValueError("data.val_scenes must be a nonempty list")
     if not isinstance(test_scenes, list):
         raise ValueError("data.test_scenes must be a list")
+    for role, scenes in (
+        ("train", train_scenes),
+        ("validation", val_scenes),
+        ("test", test_scenes),
+    ):
+        if any(not isinstance(scene, str) or not scene for scene in scenes):
+            raise ValueError(f"data.{role}_scenes must contain nonempty strings")
+        if len(set(scenes)) != len(scenes):
+            raise ValueError(f"data.{role}_scenes contains duplicate scenes")
     roles = {
         "train": set(train_scenes),
         "validation": set(val_scenes),
@@ -189,6 +202,16 @@ def load_resolved_config(path: Path) -> dict[str, Any]:
         for first, second in (("train", "validation"), ("train", "test"), ("validation", "test"))
     ):
         raise ValueError("train, validation, and test scenes must be pairwise disjoint")
+    if data["split_id"] == "formal_252_split_seed42_202_15_35":
+        if tuple(len(role) for role in (train_scenes, val_scenes, test_scenes)) != (
+            202,
+            15,
+            35,
+        ):
+            raise ValueError("formal split must contain exact 202/15/35 scene counts")
+        expected_formal_scenes = {f"hsi_{scene_id:04d}" for scene_id in range(1, 253)}
+        if set(train_scenes + val_scenes + test_scenes) != expected_formal_scenes:
+            raise ValueError("formal split must cover hsi_0001 through hsi_0252 exactly once")
 
     normalization = config["normalization"]
     if not isinstance(normalization["epsilon"], (int, float)) or normalization["epsilon"] <= 0:
@@ -223,6 +246,8 @@ def load_resolved_config(path: Path) -> dict[str, Any]:
             raise ValueError(f"runner.{key} must be a positive integer")
     if runner["gradient_clip_norm"] <= 0 or runner["early_stopping_patience"] <= 0:
         raise ValueError("runner clip norm and patience must be positive")
+    if runner["run_overfit_probe"] not in (True, False):
+        raise TypeError("runner.run_overfit_probe must be boolean")
     metrics = config["metrics"]
     if metrics["checkpoint"] != "macro_zMAE":
         raise ValueError("metrics.checkpoint must be macro_zMAE")
@@ -526,6 +551,8 @@ def save_training_state(
     history: dict[str, Any],
     experiment_signature: str,
     dataloader_generator: torch.Generator,
+    best_metric: float | None = None,
+    no_improve_epochs: int = 0,
 ) -> None:
     atomic_torch_save(
         Path(path),
@@ -538,7 +565,13 @@ def save_training_state(
             "optimizer_state_dict": optimizer.state_dict(),
             "scheduler_state_dict": scheduler.state_dict(),
             "history": history,
+            "best_metric": best_metric,
+            "no_improve_epochs": no_improve_epochs,
             "torch_rng_state": torch.get_rng_state(),
+            "cuda_rng_state_all": (
+                torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None
+            ),
+            "numpy_random_state": np.random.get_state(),
             "dataloader_generator_state": dataloader_generator.get_state(),
             "python_random_state": random.getstate(),
         },
@@ -563,6 +596,14 @@ def restore_training_state(
     optimizer.load_state_dict(state["optimizer_state_dict"])
     scheduler.load_state_dict(state["scheduler_state_dict"])
     torch.set_rng_state(state["torch_rng_state"])
+    cuda_rng_state_all = state.get("cuda_rng_state_all")
+    if cuda_rng_state_all is not None:
+        if not torch.cuda.is_available():
+            raise RuntimeError("checkpoint contains CUDA RNG state but CUDA is unavailable")
+        torch.cuda.set_rng_state_all(cuda_rng_state_all)
+    numpy_random_state = state.get("numpy_random_state")
+    if numpy_random_state is not None:
+        np.random.set_state(numpy_random_state)
     dataloader_generator.set_state(state["dataloader_generator_state"])
     random.setstate(state["python_random_state"])
     return state

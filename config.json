@@ -1,70 +1,45 @@
 {
   "schema_version": 1,
-  "experiment_id": "local_minimum_smoke_v5",
+  "experiment_id": "formal_restormer_core20_seed42_v1",
   "data": {
-    "split_id": "local_minimum_2_1_0",
-    "manifest": "data/derived/measurements/cassi_forward_v1/local_minimum/manifest.json",
-    "normalization": "artifacts/normalization/local_minimum_train12_v1.json",
-    "train_scenes": [
-      "hsi_0001",
-      "hsi_0002"
-    ],
-    "val_scenes": [
-      "hsi_0003"
-    ],
-    "test_scenes": [],
+    "split_id": "formal_252_split_seed42_202_15_35",
+    "manifest": "data/derived/measurements/cassi_forward_v1/formal_252_stride256/manifest.json",
+    "normalization": "artifacts/normalization/formal_252_train202_v1.json",
+    "train_scenes": ["hsi_0001","hsi_0002","hsi_0003","hsi_0005","hsi_0006","hsi_0007","hsi_0008","hsi_0009","hsi_0012","hsi_0014","hsi_0015","hsi_0017","hsi_0018","hsi_0019","hsi_0020","hsi_0021","hsi_0023","hsi_0024","hsi_0025","hsi_0026","hsi_0027","hsi_0029","hsi_0031","hsi_0032","hsi_0033","hsi_0034","hsi_0035","hsi_0036","hsi_0037","hsi_0038","hsi_0039","hsi_0040","hsi_0041","hsi_0042","hsi_0044","hsi_0047","hsi_0048","hsi_0049","hsi_0050","hsi_0051","hsi_0053","hsi_0054","hsi_0055","hsi_0056","hsi_0057","hsi_0058","hsi_0059","hsi_0060","hsi_0061","hsi_0063","hsi_0064","hsi_0065","hsi_0066","hsi_0068","hsi_0069","hsi_0070","hsi_0071","hsi_0072","hsi_0074","hsi_0075","hsi_0076","hsi_0077","hsi_0078","hsi_0081","hsi_0082","hsi_0083","hsi_0084","hsi_0086","hsi_0087","hsi_0088","hsi_0089","hsi_0090","hsi_0091","hsi_0092","hsi_0093","hsi_0094","hsi_0095","hsi_0097","hsi_0098","hsi_0101","hsi_0102","hsi_0103","hsi_0104","hsi_0108","hsi_0109","hsi_0110","hsi_0111","hsi_0112","hsi_0113","hsi_0114","hsi_0115","hsi_0116","hsi_0117","hsi_0118","hsi_0119","hsi_0120","hsi_0121","hsi_0122","hsi_0124","hsi_0127","hsi_0128","hsi_0129","hsi_0130","hsi_0133","hsi_0134","hsi_0135","hsi_0136","hsi_0137","hsi_0138","hsi_0139","hsi_0140","hsi_0141","hsi_0142","hsi_0143","hsi_0144","hsi_0145","hsi_0146","hsi_0147","hsi_0148","hsi_0149","hsi_0150","hsi_0151","hsi_0152","hsi_0153","hsi_0154","hsi_0155","hsi_0156","hsi_0157","hsi_0158","hsi_0159","hsi_0160","hsi_0161","hsi_0163","hsi_0164","hsi_0166","hsi_0167","hsi_0169","hsi_0170","hsi_0172","hsi_0173","hsi_0174","hsi_0175","hsi_0177","hsi_0178","hsi_0179","hsi_0180","hsi_0181","hsi_0182","hsi_0183","hsi_0184","hsi_0185","hsi_0186","hsi_0187","hsi_0188","hsi_0189","hsi_0190","hsi_0191","hsi_0192","hsi_0193","hsi_0195","hsi_0196","hsi_0197","hsi_0199","hsi_0201","hsi_0205","hsi_0206","hsi_0207","hsi_0208","hsi_0209","hsi_0210","hsi_0211","hsi_0213","hsi_0214","hsi_0215","hsi_0216","hsi_0217","hsi_0220","hsi_0221","hsi_0224","hsi_0225","hsi_0228","hsi_0229","hsi_0230","hsi_0231","hsi_0232","hsi_0233","hsi_0234","hsi_0235","hsi_0236","hsi_0237","hsi_0238","hsi_0239","hsi_0240","hsi_0241","hsi_0242","hsi_0243","hsi_0244","hsi_0245","hsi_0247","hsi_0248","hsi_0249","hsi_0250"],
+    "val_scenes": ["hsi_0011","hsi_0013","hsi_0028","hsi_0043","hsi_0079","hsi_0080","hsi_0085","hsi_0099","hsi_0126","hsi_0131","hsi_0198","hsi_0202","hsi_0222","hsi_0226","hsi_0227"],
+    "test_scenes": ["hsi_0004","hsi_0010","hsi_0016","hsi_0022","hsi_0030","hsi_0045","hsi_0046","hsi_0052","hsi_0062","hsi_0067","hsi_0073","hsi_0096","hsi_0100","hsi_0105","hsi_0106","hsi_0107","hsi_0123","hsi_0125","hsi_0132","hsi_0162","hsi_0165","hsi_0168","hsi_0171","hsi_0176","hsi_0194","hsi_0200","hsi_0203","hsi_0204","hsi_0212","hsi_0218","hsi_0219","hsi_0223","hsi_0246","hsi_0251","hsi_0252"],
     "patch_size": 256,
-    "batch_size": 2,
-    "num_workers": 0
+    "batch_size": 1,
+    "val_batch_size": 1,
+    "num_workers": 4
   },
-  "normalization": {
-    "epsilon": 1e-06
-  },
+  "normalization": {"epsilon": 1e-06},
   "model": {
     "name": "RestormerCore20",
-    "dim": 4,
-    "num_heads": [
-      1
-    ],
-    "num_blocks": [
-      1
-    ],
-    "ffn_expansion_factor": 1.5,
+    "dim": 48,
+    "num_heads": [1, 2, 4, 8],
+    "num_blocks": [4, 6, 6, 8],
+    "ffn_expansion_factor": 2.66,
     "in_channels": 84,
     "out_channels": 20,
     "bias": false
   },
-  "loss": {
-    "name": "MaskedBalancedCharbonnier",
-    "epsilon": 0.001
-  },
-  "optimizer": {
-    "name": "AdamW",
-    "learning_rate": 0.001,
-    "weight_decay": 0.0001
-  },
-  "scheduler": {
-    "name": "CosineAnnealingLR",
-    "t_max": 2,
-    "eta_min": 1e-05
-  },
+  "loss": {"name": "MaskedBalancedCharbonnier", "epsilon": 0.001},
+  "optimizer": {"name": "AdamW", "learning_rate": 0.0001, "weight_decay": 0.0001},
+  "scheduler": {"name": "CosineAnnealingLR", "t_max": 300, "eta_min": 1e-06},
   "runner": {
-    "runner_root": "/home/yanzhi/project/nndl-practice/pytorch",
-    "epochs": 2,
-    "device": "cpu",
+    "runner_root": "/home/user/programs/nndl-practice/pytorch",
+    "epochs": 300,
+    "device": "cuda",
     "seed": 42,
     "gradient_clip_norm": 1.0,
-    "early_stopping_patience": 2,
-    "log_every": 1
+    "early_stopping_patience": 30,
+    "log_every": 1,
+    "run_overfit_probe": false
   },
   "metrics": {
     "checkpoint": "macro_zMAE",
-    "report": [
-      "MAE",
-      "RMSE",
-      "Bias",
-      "R2"
-    ],
+    "report": ["MAE", "RMSE", "Bias", "R2"],
     "aggregation": "scene_macro",
     "r2_variance_threshold": 1e-12,
     "overlap_fusion": "uniform_mean"
@@ -75,7 +50,5 @@
     "training": "core20_training_v1",
     "metrics": "core20_metrics_v1"
   },
-  "output": {
-    "root": "outputs"
-  }
+  "output": {"root": "outputs"}
 }

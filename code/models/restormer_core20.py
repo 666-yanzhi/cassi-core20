@@ -4,9 +4,12 @@ The model consumes a normalized CASSI measurement ``[B,256,422]`` and the
 unshifted repeated aperture ``[B,84,256,256]``. ``initial_x`` only unfolds
 measurement windows into aligned features; it is not an HSI reconstruction.
 
-Adapted from the legacy project's ``Restormer_VegIdx.py``. The legacy source
-SHA-256 at migration time was
-``cd8cc8b6b61fd74a51ebed4aac7bf7ca9e9a9bf5708cfb693861e6620193375b``.
+Adapted from the server legacy project's ``Restormer_VegIdx.py``. The exact
+source inspected during migration had SHA-256
+``d3063679b88084015e6941c3705f40ebf5a42caf1bd96b82d868d4d75a88939b``.
+Its encoder, learned mask downsampling, mask-guided MDTA, GDFN, decoder, and
+default hyperparameters are retained. The output head is deliberately rebuilt
+for the isolated 20-channel ``reviewed_v3_core20`` protocol.
 """
 
 from __future__ import annotations
@@ -170,6 +173,14 @@ class RestormerCore20(nn.Module):
                     [
                         blocks,
                         nn.Conv2d(channels, channels * 2, 4, stride=2, padding=1, bias=False),
+                        nn.Conv2d(
+                            EXPECTED_BANDS,
+                            EXPECTED_BANDS,
+                            4,
+                            stride=2,
+                            padding=1,
+                            bias=False,
+                        ),
                     ]
                 )
             )
@@ -257,13 +268,13 @@ class RestormerCore20(nn.Module):
         encoder_features: list[torch.Tensor] = []
         encoder_masks: list[torch.Tensor] = []
         current_mask = model_mask
-        for blocks, downsample in self.encoders:
+        for blocks, downsample, mask_downsample in self.encoders:
             for block in blocks:
                 features = block(features, current_mask)
             encoder_features.append(features)
             encoder_masks.append(current_mask)
             features = downsample(features)
-            current_mask = F.interpolate(current_mask, size=features.shape[-2:], mode="nearest")
+            current_mask = mask_downsample(current_mask)
 
         for block in self.bottleneck:
             features = block(features, current_mask)

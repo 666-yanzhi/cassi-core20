@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Build and verify versioned CASSI measurement samples.
 
-The CLI supports both the archived random-mask smoke workflow and the reviewed
-three-scene minimum workflow that uses ``data/mask/mask.npy``. The latter is a
-formal simulation baseline, but it remains a local behavior gate rather than a
-formal 252-scene experiment.
+The CLI supports the archived random-mask smoke workflow, the reviewed
+three-scene minimum workflow, and the formal 252-scene workflow. Formal mode
+requires the frozen historical scene split and writes its identity into the
+measurement manifest before training can consume it.
 """
 
 from __future__ import annotations
@@ -38,10 +38,19 @@ DEFAULT_FORMAL_MASK_META = REPO_ROOT / "data/mask/mask.meta.json"
 DEFAULT_MINIMUM_OUTPUT = (
     REPO_ROOT / "data/derived/measurements/cassi_forward_v1/local_minimum"
 )
+DEFAULT_FORMAL_SPLIT = (
+    REPO_ROOT / "data/manifests/formal_252_split_seed42_202_15_35.json"
+)
+DEFAULT_FORMAL_OUTPUT = (
+    REPO_ROOT
+    / "data/derived/measurements/cassi_forward_v1/formal_252_stride256"
+)
 
 MASK_ROLE_DEVELOPMENT = "development_smoke_only"
 MASK_ROLE_FORMAL = "formal"
 SCOPE_LOCAL_MINIMUM = "local_minimum_experiment"
+SCOPE_FORMAL = "formal_252_experiment"
+FORMAL_SPLIT_ID = "formal_252_split_seed42_202_15_35"
 LABEL_VERSION = "reviewed_v3_core20"
 VALIDITY_VERSION = "hsi_reflectance_v1"
 
@@ -180,13 +189,13 @@ def find_valid_patch_origins(
     hsi_valid_mask: np.ndarray,
     *,
     stride: int,
-    max_patches: int,
+    max_patches: int | None,
 ) -> list[tuple[int, int]]:
     validity = np.asarray(hsi_valid_mask)
     if validity.ndim != 2 or validity.dtype != np.bool_:
         raise ValueError("hsi_valid_mask must be an HW bool array")
-    if stride <= 0 or max_patches <= 0:
-        raise ValueError("stride and max_patches must be positive")
+    if stride <= 0 or (max_patches is not None and max_patches <= 0):
+        raise ValueError("stride must be positive and max_patches must be positive or None")
     height, width = validity.shape
     if height < cassi_forward.PATCH_SIZE or width < cassi_forward.PATCH_SIZE:
         raise ValueError("scene is smaller than the fixed 256x256 patch")
@@ -207,7 +216,7 @@ def find_valid_patch_origins(
             ]
             if bool(patch.all()):
                 origins.append((top, left))
-                if len(origins) == max_patches:
+                if max_patches is not None and len(origins) == max_patches:
                     return origins
     if not origins:
         raise ValueError("scene has no fully valid 256x256 patch on the deterministic grid")
@@ -233,6 +242,56 @@ def _discover_sources(input_dir: Path, scenes: list[str] | None) -> list[Path]:
     return result
 
 
+def load_formal_scene_split(path: Path) -> dict[str, Any]:
+    """Validate and convert the frozen 202/15/35 integer scene split."""
+
+    path = Path(path).resolve()
+    payload = _read_json(path)
+    if payload.get("seed") != 42:
+        raise ValueError("formal split seed must be 42")
+    if payload.get("partition_unit") != "scene":
+        raise ValueError("formal split partition_unit must be scene")
+    if payload.get("physical_independence_confirmed") is not True:
+        raise ValueError("formal split must confirm physical scene independence")
+    expected_counts = {"train": 202, "val": 15, "test": 35}
+    roles: dict[str, list[str]] = {}
+    integer_roles: dict[str, list[int]] = {}
+    for role, expected_count in expected_counts.items():
+        values = payload.get(role)
+        if (
+            not isinstance(values, list)
+            or len(values) != expected_count
+            or any(not isinstance(value, int) for value in values)
+            or len(set(values)) != len(values)
+        ):
+            raise ValueError(f"formal split {role} must contain {expected_count} unique integers")
+        integer_roles[role] = values
+        roles[role] = [f"hsi_{value:04d}" for value in values]
+    role_sets = {role: set(values) for role, values in integer_roles.items()}
+    if (
+        role_sets["train"] & role_sets["val"]
+        or role_sets["train"] & role_sets["test"]
+        or role_sets["val"] & role_sets["test"]
+    ):
+        raise ValueError("formal split roles are not pairwise disjoint")
+    if set().union(*role_sets.values()) != set(range(1, 253)):
+        raise ValueError("formal split must cover scene IDs 1 through 252 exactly once")
+    return {
+        "split_id": FORMAL_SPLIT_ID,
+        "source_path": _recorded_path(path),
+        "source_sha256": sha256_file(path),
+        "source_split_hash": payload.get("split_hash"),
+        "seed": 42,
+        "partition_unit": payload.get("partition_unit"),
+        "physical_independence_confirmed": payload.get(
+            "physical_independence_confirmed"
+        ),
+        "train_scenes": roles["train"],
+        "val_scenes": roles["val"],
+        "test_scenes": roles["test"],
+    }
+
+
 def generate_smoke_dataset(
     *,
     input_dir: Path = DEFAULT_INPUT_DIR,
@@ -243,10 +302,11 @@ def generate_smoke_dataset(
     output_dir: Path = DEFAULT_SMOKE_OUTPUT,
     scenes: list[str] | None = None,
     stride: int = 256,
-    max_patches_per_scene: int = 2,
+    max_patches_per_scene: int | None = 2,
     required_mask_role: str = MASK_ROLE_DEVELOPMENT,
     dataset_scope: str = MASK_ROLE_DEVELOPMENT,
     warning: str = "Development smoke data only; never report formal metrics from it.",
+    split_identity: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Generate a small deterministic dataset using a development-only aperture."""
 
@@ -417,6 +477,9 @@ def generate_smoke_dataset(
             "samples": samples,
             "warning": warning,
         }
+        if split_identity is not None:
+            manifest["split_id"] = split_identity["split_id"]
+            manifest["split"] = split_identity
         _atomic_write_json(temporary_dir / "manifest.json", manifest)
         output_dir.parent.mkdir(parents=True, exist_ok=True)
         os.replace(temporary_dir, output_dir)
@@ -463,6 +526,44 @@ def generate_minimum_dataset(
             "baseline but is not hardware calibrated, and these samples cannot support "
             "generalization claims."
         ),
+    )
+
+
+def generate_formal_dataset(
+    *,
+    split_manifest_path: Path = DEFAULT_FORMAL_SPLIT,
+    input_dir: Path = DEFAULT_INPUT_DIR,
+    validity_dir: Path = DEFAULT_VALIDITY_DIR,
+    label_dir: Path = DEFAULT_LABEL_DIR,
+    mask_path: Path = DEFAULT_FORMAL_MASK,
+    mask_metadata_path: Path = DEFAULT_FORMAL_MASK_META,
+    output_dir: Path = DEFAULT_FORMAL_OUTPUT,
+    stride: int = 256,
+    max_patches_per_scene: int | None = None,
+) -> dict[str, Any]:
+    """Generate deterministic measurements after the scene split is frozen."""
+
+    split = load_formal_scene_split(split_manifest_path)
+    scenes = sorted(
+        split["train_scenes"] + split["val_scenes"] + split["test_scenes"]
+    )
+    return generate_smoke_dataset(
+        input_dir=input_dir,
+        validity_dir=validity_dir,
+        label_dir=label_dir,
+        mask_path=mask_path,
+        mask_metadata_path=mask_metadata_path,
+        output_dir=output_dir,
+        scenes=scenes,
+        stride=stride,
+        max_patches_per_scene=max_patches_per_scene,
+        required_mask_role=MASK_ROLE_FORMAL,
+        dataset_scope=SCOPE_FORMAL,
+        warning=(
+            "Formal 252-scene simulation dataset using a fixed derived aperture. "
+            "The aperture is not hardware calibrated; test scenes are final-evaluation only."
+        ),
+        split_identity=split,
     )
 
 
@@ -565,6 +666,47 @@ def verify_minimum_dataset(
     )
 
 
+def verify_formal_dataset(
+    output_dir: Path = DEFAULT_FORMAL_OUTPUT,
+    *,
+    mask_path: Path | None = None,
+    mask_metadata_path: Path | None = None,
+) -> dict[str, Any]:
+    output_dir = Path(output_dir).resolve()
+    manifest = _read_json(output_dir / "manifest.json")
+    split = manifest.get("split") or {}
+    if manifest.get("split_id") != FORMAL_SPLIT_ID or split.get("split_id") != FORMAL_SPLIT_ID:
+        raise ValueError("formal measurement manifest split identity mismatch")
+    expected_counts = {"train_scenes": 202, "val_scenes": 15, "test_scenes": 35}
+    for key, count in expected_counts.items():
+        values = split.get(key)
+        if (
+            not isinstance(values, list)
+            or len(values) != count
+            or len(set(values)) != len(values)
+        ):
+            raise ValueError(f"formal measurement manifest {key} must contain {count} scenes")
+    role_sets = {key: set(split[key]) for key in expected_counts}
+    if (
+        role_sets["train_scenes"] & role_sets["val_scenes"]
+        or role_sets["train_scenes"] & role_sets["test_scenes"]
+        or role_sets["val_scenes"] & role_sets["test_scenes"]
+    ):
+        raise ValueError("formal measurement manifest roles overlap")
+    manifest_scenes = {sample.get("scene") for sample in manifest.get("samples", [])}
+    if set().union(*role_sets.values()) != manifest_scenes:
+        raise ValueError("formal measurement manifest samples do not match split scenes")
+    result = verify_smoke_dataset(
+        output_dir,
+        expected_scope=SCOPE_FORMAL,
+        required_mask_role=MASK_ROLE_FORMAL,
+        mask_path=mask_path,
+        mask_metadata_path=mask_metadata_path,
+    )
+    result["split_id"] = FORMAL_SPLIT_ID
+    return result
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -609,6 +751,30 @@ def main(argv: list[str] | None = None) -> int:
         "--mask-metadata-path", type=Path, default=DEFAULT_FORMAL_MASK_META
     )
 
+    formal = subparsers.add_parser("generate-formal")
+    formal.add_argument("--split-manifest", type=Path, default=DEFAULT_FORMAL_SPLIT)
+    formal.add_argument("--input-dir", type=Path, default=DEFAULT_INPUT_DIR)
+    formal.add_argument("--validity-dir", type=Path, default=DEFAULT_VALIDITY_DIR)
+    formal.add_argument("--label-dir", type=Path, default=DEFAULT_LABEL_DIR)
+    formal.add_argument("--mask-path", type=Path, default=DEFAULT_FORMAL_MASK)
+    formal.add_argument(
+        "--mask-metadata-path", type=Path, default=DEFAULT_FORMAL_MASK_META
+    )
+    formal.add_argument("--output-dir", type=Path, default=DEFAULT_FORMAL_OUTPUT)
+    formal.add_argument("--stride", type=int, default=256)
+    formal.add_argument(
+        "--max-patches-per-scene",
+        type=int,
+        help="optional positive cap; omit to keep every valid grid patch",
+    )
+
+    verify_formal = subparsers.add_parser("verify-formal")
+    verify_formal.add_argument("--output-dir", type=Path, default=DEFAULT_FORMAL_OUTPUT)
+    verify_formal.add_argument("--mask-path", type=Path, default=DEFAULT_FORMAL_MASK)
+    verify_formal.add_argument(
+        "--mask-metadata-path", type=Path, default=DEFAULT_FORMAL_MASK_META
+    )
+
     args = parser.parse_args(argv)
     if args.command == "create-dev-mask":
         result = create_development_mask(
@@ -643,8 +809,26 @@ def main(argv: list[str] | None = None) -> int:
             stride=args.stride,
             max_patches_per_scene=args.max_patches_per_scene,
         )
-    else:
+    elif args.command == "verify-minimum":
         result = verify_minimum_dataset(
+            args.output_dir,
+            mask_path=args.mask_path,
+            mask_metadata_path=args.mask_metadata_path,
+        )
+    elif args.command == "generate-formal":
+        result = generate_formal_dataset(
+            split_manifest_path=args.split_manifest,
+            input_dir=args.input_dir,
+            validity_dir=args.validity_dir,
+            label_dir=args.label_dir,
+            mask_path=args.mask_path,
+            mask_metadata_path=args.mask_metadata_path,
+            output_dir=args.output_dir,
+            stride=args.stride,
+            max_patches_per_scene=args.max_patches_per_scene,
+        )
+    else:
+        result = verify_formal_dataset(
             args.output_dir,
             mask_path=args.mask_path,
             mask_metadata_path=args.mask_metadata_path,

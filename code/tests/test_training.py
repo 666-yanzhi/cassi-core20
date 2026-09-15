@@ -73,12 +73,13 @@ def test_loss_rejects_empty_mask_and_nonfinite_prediction() -> None:
 
 
 def test_config_is_strict_and_resolves_paths(tmp_path: Path) -> None:
-    config_path = REPO_ROOT / "config.json"
+    config_path = REPO_ROOT / "configs/local_smoke.json"
     resolved = training.load_resolved_config(config_path)
     assert resolved["data"]["split_id"] == "local_minimum_2_1_0"
     assert resolved["data"]["train_scenes"] == ["hsi_0001", "hsi_0002"]
     assert resolved["data"]["val_scenes"] == ["hsi_0003"]
     assert resolved["data"]["test_scenes"] == []
+    assert resolved["data"]["val_batch_size"] == 1
     assert Path(resolved["data"]["manifest"]).is_absolute()
     assert resolved["source_config_sha256"] == training.sha256_file(config_path)
 
@@ -194,7 +195,7 @@ def test_real_minimum_data_uses_train_only_normalization(tmp_path: Path) -> None
     reason="local minimum experiment data are not present",
 )
 def test_real_minimum_training_is_deterministic(tmp_path: Path) -> None:
-    config = training.load_resolved_config(REPO_ROOT / "config.json")
+    config = training.load_resolved_config(REPO_ROOT / "configs/local_smoke.json")
     manifest_path = Path(config["data"]["manifest"])
     normalization_path = tmp_path / "determinism-normalization.json"
     training.fit_normalization(
